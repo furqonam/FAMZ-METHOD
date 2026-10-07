@@ -77,6 +77,44 @@
   flex-shrink: 0;
 }
 
+/* 02.3 — TOPBAR BADGES (container) */
+.topbar__badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 02.4 — TIER BADGE (Free / Basic / Pro) */
+.tier-badge {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: var(--r-pill);
+  border: 1px solid;
+  transition: var(--t-fast);
+}
+
+.tier-badge--free {
+  color: var(--txt-3);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.tier-badge--basic {
+  color: var(--orange);
+  background: rgba(255, 159, 10, 0.1);
+  border-color: rgba(255, 159, 10, 0.3);
+}
+
+.tier-badge--pro {
+  color: var(--green);
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.3);
+  box-shadow: 0 0 12px rgba(48, 209, 88, 0.3);
+}
+
 /* ─────────────────────────────────────────────────────────────
    SECTION 03 — HERO
    ───────────────────────────────────────────────────────────── */
