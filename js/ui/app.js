@@ -10,6 +10,16 @@
 /* ─────────────────────────────────────────────────────────────
    SECTION 01 — QUOTA MODAL
    ───────────────────────────────────────────────────────────── */
+/* Helper lokal — jangan depend ke queue-ui.js */
+function esc(text) {
+  if (typeof escapeHtml === 'function') {
+    try { return escapeHtml(text); } catch (e) {}
+  }
+  const div = document.createElement('div');
+  div.textContent = String(text || '');
+  return div.innerHTML;
+}
+
 function showQuotaModal(message) {
   // Hapus modal lama kalau ada
   const old = document.getElementById('famz_quota_modal');
@@ -23,7 +33,7 @@ function showQuotaModal(message) {
     '<div class="modal__box glass">',
       '<div class="modal__icon">⏱</div>',
       '<h3 class="modal__title">Kuota Habis</h3>',
-      '<p class="modal__text">' + escapeHtml(message || 'Kuota harian lu udah abis. Upgrade buat unlimited.') + '</p>',
+      '<p class="modal__text">' + esc(message || 'Kuota harian lu udah abis. Upgrade buat unlimited.') + '</p>',
       '<div class="modal__actions">',
         '<button class="btn btn--ghost" id="famz_quota_close">Nanti</button>',
         '<button class="btn btn--primary" id="famz_quota_upgrade">Upgrade</button>',
