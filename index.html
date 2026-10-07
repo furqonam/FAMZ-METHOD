@@ -61,18 +61,18 @@
   <!-- ═══════════════════════════════════════════════════════════════
        SECTION 06 — TOPBAR
        ═══════════════════════════════════════════════════════════════ -->
-<header class="topbar glass">
-  <div class="topbar__inner">
-    <div class="brand">
-      <span class="brand__dot"></span>
-      <span class="brand__text">𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿</span>
+  <header class="topbar glass">
+    <div class="topbar__inner">
+      <div class="brand">
+        <span class="brand__dot"></span>
+        <span class="brand__text">𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿</span>
+      </div>
+      <div class="topbar__badges">
+        <span class="tier-badge tier-badge--free" id="tier_badge">FREE</span>
+        <span class="badge">𝘃𝟭.𝟬</span>
+      </div>
     </div>
-    <div class="topbar__badges">
-      <span class="tier-badge tier-badge--free" id="tier_badge">FREE</span>
-      <span class="badge">𝘃𝟭.𝟬</span>
-    </div>
-  </div>
-</header>
+  </header>
 
   <!-- ═══════════════════════════════════════════════════════════════
        SECTION 07 — HERO
@@ -94,45 +94,41 @@
        SECTION 08 — TAB SWITCHER
        ═══════════════════════════════════════════════════════════════ -->
   <nav class="tabs" role="tablist">
-    <button class="tab is-active" data-tool="patch"    onclick="switchTool('patch')"    role="tab">
+    <button class="tab is-active" data-tool="patch" onclick="switchTool('patch')" role="tab">
       <span class="tab__icon">🎬</span>
       <span class="tab__label">Patch</span>
     </button>
-    <button class="tab" data-tool="encode"   onclick="switchTool('encode')"   role="tab">
+    <button class="tab" data-tool="encode" onclick="switchTool('encode')" role="tab">
       <span class="tab__icon">⚙️</span>
       <span class="tab__label">Encode</span>
     </button>
-    <button class="tab" data-tool="upscale"  onclick="switchTool('upscale')"  role="tab">
+    <button class="tab" data-tool="upscale" onclick="switchTool('upscale')" role="tab">
       <span class="tab__icon">✨</span>
       <span class="tab__label">Upscale</span>
     </button>
-  <button class="tab" data-tool="analyze"  onclick="switchTool('analyze')"  role="tab">
-    <span class="tab__icon">📊</span>
-    <span class="tab__label">Analyze</span>
-  </button>
-  <button class="tab" data-tool="queue"    onclick="switchTool('queue')"    role="tab">
-    <span class="tab__icon">📦</span>
-    <span class="tab__label">Queue</span>
-  </button>
-</nav>
+    <button class="tab" data-tool="analyze" onclick="switchTool('analyze')" role="tab">
+      <span class="tab__icon">📊</span>
+      <span class="tab__label">Analyze</span>
+    </button>
+    <button class="tab" data-tool="queue" onclick="switchTool('queue')" role="tab">
+      <span class="tab__icon">📦</span>
+      <span class="tab__label">Queue</span>
+    </button>
+  </nav>
 
   <!-- ═══════════════════════════════════════════════════════════════
        SECTION 09 — MAIN CONTENT
        ═══════════════════════════════════════════════════════════════ -->
   <main class="shell">
 
-    <!-- ─────────────────────────────────────────────────────────────
-         TOOL 01 — PATCH
-         ───────────────────────────────────────────────────────────── -->
+    <!-- TOOL 01 — PATCH -->
     <section class="tool is-active" id="tool_patch">
       <div class="card glass">
-
         <div class="card__head">
           <h2 class="card__title">Metadata Patch</h2>
           <p class="card__desc">Rebuild struktur MP4 — bypass compress TikTok.</p>
         </div>
 
-        <!-- Drop Zone -->
         <div class="drop" id="patch_drop" onclick="openPicker('patch_input')">
           <input type="file" id="patch_input" accept="video/mp4" hidden onchange="onPickPatch(event)">
           <div class="drop__icon">⬆</div>
@@ -140,24 +136,20 @@
           <div class="drop__sub">Tap atau drop file di sini</div>
         </div>
 
-        <!-- File Info -->
         <div class="filetag" id="patch_filetag" hidden>
           <span class="filetag__name" id="patch_name">—</span>
           <span class="filetag__size" id="patch_size">—</span>
         </div>
 
-        <!-- Preview -->
         <div class="preview" id="patch_preview" hidden>
           <video id="patch_video" playsinline muted loop></video>
         </div>
 
-        <!-- Status -->
         <div class="status" id="patch_status">
           <span class="status__dot"></span>
           <span class="status__text" id="patch_status_text">Siap</span>
         </div>
 
-        <!-- Progress -->
         <div class="progress" id="patch_progress" hidden>
           <div class="progress__track">
             <div class="progress__fill" id="patch_fill"></div>
@@ -169,7 +161,6 @@
           <div class="progress__log" id="patch_log"></div>
         </div>
 
-        <!-- Report -->
         <div class="report" id="patch_report" hidden>
           <div class="report__row"><span>Nama File</span><span id="patch_report_name">—</span></div>
           <div class="report__row"><span>Waktu</span><span id="patch_report_time">—</span></div>
@@ -177,26 +168,20 @@
           <div class="report__row"><span>Output</span><span id="patch_report_after">—</span></div>
         </div>
 
-        <!-- Action -->
         <button class="btn btn--primary" id="patch_btn" onclick="runPatch()" disabled>
           Run Patch
         </button>
-
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         TOOL 02 — ENCODE
-         ───────────────────────────────────────────────────────────── -->
+    <!-- TOOL 02 — ENCODE -->
     <section class="tool" id="tool_encode">
       <div class="card glass">
-
         <div class="card__head">
           <h2 class="card__title">Advanced Encoder</h2>
           <p class="card__desc">Re-encode H.264 — WebCodecs + FFmpeg fallback.</p>
         </div>
 
-        <!-- Settings -->
         <div class="settings">
           <label class="field-label" for="encode_crf">Quality (CRF)</label>
           <select class="field" id="encode_crf">
@@ -214,7 +199,6 @@
           </select>
         </div>
 
-        <!-- Drop Zone -->
         <div class="drop" onclick="openPicker('encode_input')">
           <input type="file" id="encode_input" accept="video/mp4" hidden onchange="onPickEncode(event)">
           <div class="drop__icon">⬆</div>
@@ -222,19 +206,16 @@
           <div class="drop__sub">Tap atau drop file di sini</div>
         </div>
 
-        <!-- File Info -->
         <div class="filetag" id="encode_filetag" hidden>
           <span class="filetag__name" id="encode_name">—</span>
           <span class="filetag__size" id="encode_size">—</span>
         </div>
 
-        <!-- Status -->
         <div class="status" id="encode_status">
           <span class="status__dot"></span>
           <span class="status__text" id="encode_status_text">Siap</span>
         </div>
 
-        <!-- Progress -->
         <div class="progress" id="encode_progress" hidden>
           <div class="progress__track">
             <div class="progress__fill" id="encode_fill"></div>
@@ -246,26 +227,20 @@
           <div class="progress__log" id="encode_log"></div>
         </div>
 
-        <!-- Action -->
         <button class="btn btn--primary" id="encode_btn" onclick="runEncode()" disabled>
           Run Encode
         </button>
-
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         TOOL 03 — UPSCALE
-         ───────────────────────────────────────────────────────────── -->
+    <!-- TOOL 03 — UPSCALE -->
     <section class="tool" id="tool_upscale">
       <div class="card glass">
-
         <div class="card__head">
           <h2 class="card__title">AI Upscale</h2>
           <p class="card__desc">Enhance image dengan AI — ONNX WebGPU + WASM fallback.</p>
         </div>
 
-        <!-- Drop Zone -->
         <div class="drop" onclick="openPicker('upscale_input')">
           <input type="file" id="upscale_input" accept="image/*" hidden onchange="onPickUpscale(event)">
           <div class="drop__icon">⬆</div>
@@ -273,24 +248,20 @@
           <div class="drop__sub">JPG, PNG, WebP</div>
         </div>
 
-        <!-- File Info -->
         <div class="filetag" id="upscale_filetag" hidden>
           <span class="filetag__name" id="upscale_name">—</span>
           <span class="filetag__size" id="upscale_size">—</span>
         </div>
 
-        <!-- Preview -->
         <div class="preview preview--image" id="upscale_preview" hidden>
           <img id="upscale_img" alt="Preview">
         </div>
 
-        <!-- Status -->
         <div class="status" id="upscale_status">
           <span class="status__dot"></span>
           <span class="status__text" id="upscale_status_text">Siap</span>
         </div>
 
-        <!-- Progress -->
         <div class="progress" id="upscale_progress" hidden>
           <div class="progress__track">
             <div class="progress__fill" id="upscale_fill"></div>
@@ -302,26 +273,20 @@
           <div class="progress__log" id="upscale_log"></div>
         </div>
 
-        <!-- Action -->
         <button class="btn btn--primary" id="upscale_btn" onclick="runUpscale()" disabled>
           Run Upscale
         </button>
-
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         TOOL 04 — ANALYZE
-         ───────────────────────────────────────────────────────────── -->
+    <!-- TOOL 04 — ANALYZE -->
     <section class="tool" id="tool_analyze">
       <div class="card glass">
-
         <div class="card__head">
           <h2 class="card__title">Upload Analyzer</h2>
           <p class="card__desc">Cek HD retained di TikTok, Instagram, YouTube.</p>
         </div>
 
-        <!-- URL Input -->
         <label class="field-label" for="analyze_url">Video URL</label>
         <input type="url" id="analyze_url" class="field"
                placeholder="https://vt.tiktok.com/..."
@@ -329,13 +294,11 @@
 
         <p class="hint">Support: TikTok, Instagram, YouTube, Twitter</p>
 
-        <!-- Status -->
         <div class="status" id="analyze_status">
           <span class="status__dot"></span>
           <span class="status__text" id="analyze_status_text">Siap</span>
         </div>
 
-        <!-- Progress -->
         <div class="progress" id="analyze_progress" hidden>
           <div class="progress__track">
             <div class="progress__fill" id="analyze_fill"></div>
@@ -347,26 +310,20 @@
           <div class="progress__log" id="analyze_log"></div>
         </div>
 
-        <!-- Result -->
         <div class="result" id="analyze_result" hidden></div>
 
-        <!-- Action -->
         <button class="btn btn--primary" id="analyze_btn" onclick="runAnalyze()">
           Scan
         </button>
-
       </div>
     </section>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         TOOL 05 — QUEUE (BATCH)
-         ───────────────────────────────────────────────────────────── -->
+    <!-- TOOL 05 — QUEUE -->
     <section class="tool" id="tool_queue">
       <div class="card glass">
-
         <div class="card__head">
           <h2 class="card__title">Batch Queue</h2>
-          <p class="card__desc">Proses banyak file sekaligus — auto download .zip.</p>
+          <p class="card__desc">Proses banyak file sekaligus — auto download.</p>
         </div>
 
         <div class="drop" onclick="openPicker('queue_input')">
@@ -376,20 +333,16 @@
           <div class="drop__sub">Maksimal 10 file MP4</div>
         </div>
 
-        <!-- Queue List -->
         <div class="queue" id="queue_list"></div>
 
-        <!-- Status -->
         <div class="status" id="queue_status">
           <span class="status__dot"></span>
           <span class="status__text" id="queue_status_text">Kosong</span>
         </div>
 
-        <!-- Action -->
         <button class="btn btn--primary" id="queue_btn" onclick="runQueue()" disabled>
           Run Queue
         </button>
-
       </div>
     </section>
 
@@ -410,10 +363,9 @@
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
   <!-- ═══════════════════════════════════════════════════════════════
-       SECTION 12 — SCRIPTS (urutan penting)
+       SECTION 12 — SCRIPTS
        ═══════════════════════════════════════════════════════════════ -->
 
-  <!-- CORE ENGINE -->
   <script src="js/core/atoms.js"></script>
   <script src="js/core/patch.js"></script>
   <script src="js/core/encoder.js"></script>
@@ -423,7 +375,6 @@
   <script src="js/core/session.js"></script>
   <script src="js/core/download.js"></script>
 
-  <!-- UI LAYER -->
   <script src="js/ui/toast.js"></script>
   <script src="js/ui/tabs.js"></script>
   <script src="js/ui/patcher.js"></script>
@@ -433,7 +384,6 @@
   <script src="js/ui/queue-ui.js"></script>
   <script src="js/ui/app.js"></script>
 
-  <!-- ENTRY POINT -->
   <script src="js/main.js"></script>
 
 </body>
