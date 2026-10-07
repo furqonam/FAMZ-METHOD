@@ -64,7 +64,7 @@
   text-overflow: ellipsis;
 }
 
-/* 02.2 — BADGE */
+/* 02.2 — BADGE (version) */
 .badge {
   padding: 4px 10px;
   font-size: var(--fs-xs);
@@ -216,5 +216,10 @@ main {
 
   .hero__title {
     letter-spacing: -1px;
+  }
+
+  .tier-badge {
+    padding: 3px 8px;
+    font-size: 9px;
   }
 }
