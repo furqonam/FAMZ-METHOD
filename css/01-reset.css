@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/01-reset.css
-   Reset + Normalize + Base
+   Reset + Normalize + Base + GPU Optimization
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -25,6 +25,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — MEDIA ELEMENTS
+   SECTION 04 — MEDIA
    ───────────────────────────────────────────────────────────── */
 img,
 video,
@@ -52,7 +53,7 @@ svg {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — FORM ELEMENTS
+   SECTION 05 — FORM
    ───────────────────────────────────────────────────────────── */
 button,
 input,
@@ -77,7 +78,7 @@ input[type="file"] {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — LINKS
+   SECTION 06 — LINK
    ───────────────────────────────────────────────────────────── */
 a {
   color: inherit;
@@ -85,7 +86,7 @@ a {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — LISTS
+   SECTION 07 — LIST
    ───────────────────────────────────────────────────────────── */
 ul,
 ol {
@@ -93,7 +94,7 @@ ol {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — HEADINGS
+   SECTION 08 — HEADING
    ───────────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
@@ -101,7 +102,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — HIDDEN UTILITY
+   SECTION 09 — HIDDEN
    ───────────────────────────────────────────────────────────── */
 [hidden] {
   display: none !important;
@@ -112,7 +113,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — SCROLLBAR (iOS style)
+   SECTION 10 — SCROLLBAR
    ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
@@ -168,11 +169,42 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 14 — SAFE AREA (iPhone notch)
+   SECTION 14 — SAFE AREA
    ───────────────────────────────────────────────────────────── */
 @supports (padding: env(safe-area-inset-top)) {
   body {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 15 — GPU OPTIMIZATION
+   ───────────────────────────────────────────────────────────── */
+.tab,
+.btn,
+.card,
+.drop,
+.topbar,
+.tabs,
+.footer__btn,
+.support-btn {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.tab__icon,
+.brand__dot,
+.social-link,
+.tier-badge {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.ambient,
+.card,
+.topbar {
+  contain: layout paint;
 }
