@@ -142,6 +142,20 @@ function initAppBadge() {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   SECTION 05.1 — TIER BADGE (Free / Basic / Pro)
+   ───────────────────────────────────────────────────────────── */
+function updateTierBadge() {
+  const el = document.getElementById('tier_badge');
+  if (!el) return;
+
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+  const tier = (session && session.connected) ? (session.tier || 'free') : 'free';
+
+  el.textContent = tier.toUpperCase();
+  el.className = 'tier-badge tier-badge--' + tier;
+}
+
+/* ─────────────────────────────────────────────────────────────
    SECTION 06 — VISIBILITY HANDLER
    ───────────────────────────────────────────────────────────── */
 function initVisibilityHandler() {
