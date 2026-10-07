@@ -79,11 +79,20 @@ function renderAnalyzeResult(result) {
   const box = document.getElementById('analyze_result');
   if (!box) return;
 
-  const hdClass = result.hdRetained ? 'result__badge--ok' : 'result__badge--no';
-  const hdTitle = result.hdRetained ? '✓ HD Detected' : '✗ Standard Quality';
-  const hdSub = result.hdRetained
-    ? 'Video ke-upload dalam kualitas HD'
-    : 'Video dikompres oleh platform';
+  let hdClass, hdTitle, hdSub;
+if (result.hdRetained === null) {
+  hdClass = 'result__badge--no';
+  hdTitle = '? Data Terbatas';
+  hdSub = 'Platform gak kasih info resolusi';
+} else if (result.hdRetained) {
+  hdClass = 'result__badge--ok';
+  hdTitle = '✓ HD Detected';
+  hdSub = 'Video ke-upload dalam kualitas HD';
+} else {
+  hdClass = 'result__badge--no';
+  hdTitle = '✗ Standard Quality';
+  hdSub = 'Video dikompres oleh platform';
+}
 
   const stats = result.stats || {};
   const bitrate = result.bitrate ? (result.bitrate / 1000000).toFixed(2) + ' Mbps' : '—';
