@@ -44,6 +44,38 @@
     <div class="ambient__orb ambient__orb--c"></div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════
+       LOGIN GATE (fullscreen)
+       ═══════════════════════════════════════════════════════════════ -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate__box glass">
+      <div class="gate__logo">
+        <span class="gate__mark">F</span>
+      </div>
+      <h2 class="gate__title">𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿</h2>
+      <p class="gate__sub">Masuk pakai username atau Telegram ID</p>
+
+      <input
+        id="gate_input"
+        class="field"
+        type="text"
+        placeholder="username atau TG ID"
+        maxlength="32"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') gateLogin()">
+
+      <p id="gate_err" class="gate__err"></p>
+
+      <button id="gate_btn" class="btn btn--primary" onclick="gateLogin()">
+        Continue
+      </button>
+
+      <p class="gate__foot">
+        Belum terdaftar? <a href="https://t.me/famz_bot" target="_blank">Chat @famz_bot</a>
+      </p>
+    </div>
+  </div>
+
   <!-- TOPBAR -->
   <header class="topbar glass">
     <div class="topbar__inner">
@@ -334,37 +366,6 @@
   </footer>
 
   <!-- ═══════════════════════════════════════════════════════════════
-       LOGIN MODAL
-       ═══════════════════════════════════════════════════════════════ -->
-  <div class="modal" id="login_modal">
-    <div class="modal__backdrop" onclick="closeLoginModal()"></div>
-    <div class="modal__box glass">
-      <div class="modal__icon">🔐</div>
-      <h3 class="modal__title">Login</h3>
-      <p class="modal__text">Masuk pakai username atau Telegram ID</p>
-
-      <input
-        type="text"
-        id="login_input"
-        class="field"
-        placeholder="username atau TG ID"
-        maxlength="32"
-        autocomplete="off"
-        onkeydown="if(event.key==='Enter') doLogin()"
-        style="margin-bottom: 8px;">
-
-      <p class="hint" style="margin-bottom: 20px;">
-        Belum terdaftar? Chat <a href="https://t.me/famz_bot" target="_blank" style="color:var(--accent)">@famz_bot</a>
-      </p>
-
-      <div class="modal__actions">
-        <button class="btn btn--ghost" id="login_cancel" onclick="closeLoginModal()">Batal</button>
-        <button class="btn btn--primary" id="login_submit" onclick="doLogin()">Login</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════
        ACCOUNT MODAL
        ═══════════════════════════════════════════════════════════════ -->
   <div class="modal" id="account_modal">
@@ -373,7 +374,6 @@
       <div class="modal__icon">👤</div>
       <h3 class="modal__title">Your Profile</h3>
 
-      <!-- Avatar row -->
       <div class="account__avatar-row">
         <div class="avatar" id="av_circle" onclick="openPicker('picker_avatar')">
           <img id="av_img" alt="">
@@ -386,11 +386,9 @@
         </div>
       </div>
 
-      <!-- Display name -->
       <label class="field-label">Display Name</label>
       <input id="prof_name" class="field" type="text" maxlength="32" placeholder="Enter name" style="margin-bottom: 12px;">
 
-      <!-- Telegram ID -->
       <label class="field-label">Telegram ID (optional)</label>
       <input id="tg_id" class="field" type="text" maxlength="20" placeholder="123456789" style="margin-bottom: 12px;">
 
