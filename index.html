@@ -364,6 +364,46 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════════
+       ACCOUNT MODAL
+       ═══════════════════════════════════════════════════════════════ -->
+  <div class="modal" id="account_modal">
+    <div class="modal__backdrop" onclick="closeAccountModal()"></div>
+    <div class="modal__box glass">
+      <div class="modal__icon">👤</div>
+      <h3 class="modal__title">Your Profile</h3>
+
+      <!-- Avatar row -->
+      <div class="account__avatar-row">
+        <div class="avatar" id="av_circle" onclick="openPicker('picker_avatar')">
+          <img id="av_img" alt="">
+          <span id="av_initial">G</span>
+        </div>
+        <input type="file" id="picker_avatar" accept="image/*" hidden onchange="onPickAvatar(event)">
+        <div class="account__who">
+          <div class="who" id="who_name">Guest</div>
+          <div class="who-sub" id="who_role">Guest User</div>
+        </div>
+      </div>
+
+      <!-- Display name -->
+      <label class="field-label">Display Name</label>
+      <input id="prof_name" class="field" type="text" maxlength="32" placeholder="Enter name" style="margin-bottom: 12px;">
+
+      <!-- Telegram ID -->
+      <label class="field-label">Telegram ID (optional)</label>
+      <input id="tg_id" class="field" type="text" maxlength="20" placeholder="123456789" style="margin-bottom: 12px;">
+
+      <label class="field-label">Telegram Username (optional)</label>
+      <input id="tg_user" class="field" type="text" maxlength="32" placeholder="@username" style="margin-bottom: 20px;">
+
+      <div class="modal__actions">
+        <button class="btn btn--ghost" onclick="closeAccountModal()">Close</button>
+        <button class="btn btn--primary" onclick="saveAccount()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
@@ -384,9 +424,9 @@
   <script src="js/ui/upscale.js"></script>
   <script src="js/ui/analyzer.js"></script>
   <script src="js/ui/queue-ui.js"></script>
-  <script src="js/ui/app.js"></script>
   <script src="js/ui/account.js"></script>
-     
+  <script src="js/ui/app.js"></script>
+
   <script src="js/main.js"></script>
 
 </body>
