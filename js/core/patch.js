@@ -121,15 +121,20 @@ function rebuildMvhdSafe(arr, dv, atom) {
   const now = Math.floor(Date.now() / 1000) + 2082844800;
 
   if (version === 0) {
-    // 32-bit times
-    odv.setUint32(12, now, false); // creation_time
-    odv.setUint32(16, now, false); // modification_time
+    odv.setUint32(12, now, false);
+    odv.setUint32(16, now, false);
+    // TRICK: spoof timescale + duration → TikTok skip re-encode
+    odv.setUint32(20, 0xFFFFFFFF, false);
+    odv.setUint32(24, 0xFFFFFFFF, false);
   } else {
-    // 64-bit times
     odv.setUint32(12, 0, false);
     odv.setUint32(16, now, false);
     odv.setUint32(20, 0, false);
     odv.setUint32(24, now, false);
+    odv.setUint32(28, 0, false);
+    odv.setUint32(32, 0xFFFFFFFF, false);
+    odv.setUint32(36, 0, false);
+    odv.setUint32(40, 0xFFFFFFFF, false);
   }
   return out;
 }
