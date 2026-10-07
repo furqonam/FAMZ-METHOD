@@ -160,7 +160,8 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 
     const entryType = readType(arr, entryStart + 4);
 
-    if (entryType === 'avc1' || entryType === 'avc3') {
+    if (entryType === 'avc1' || entryType === 'avc3' ||
+    entryType === 'hvc1' || entryType === 'hev1') {
       const entrySize = dv.getUint32(entryStart, false);
       if (entrySize > stsd.end - entryStart || entrySize < 32) continue;
 
@@ -318,9 +319,9 @@ function buildHdlr() {
    SECTION 12 — MERGE UDTA
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
-  const oldBody = sliceAtomBody(oldUdta);
-  const sigBody = sigUdta.slice(8);
-  return buildAtom('udta', mergeBytes([oldBody, sigBody]));
+  // REPLACE total — anti double-stack
+  // Kalau file udah pernah di-patch, tag lama dihapus, ganti FAMZ
+  return sigUdta;
 }
 
 /* ─────────────────────────────────────────────────────────────
