@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/02-theme.css
-   AMOLED + Minimal Design (MAX PERFORMANCE)
+   AMOLED Black + Liquid Glass Design System
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -9,13 +9,13 @@
    SECTION 01 — DESIGN TOKENS
    ───────────────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds */
+  /* AMOLED */
   --bg-0: #000000;
   --bg-1: #08080c;
   --bg-2: #101016;
   --bg-3: #18181f;
 
-  /* Glass (solid) */
+  /* Glass */
   --glass-1: rgba(255, 255, 255, 0.035);
   --glass-2: rgba(255, 255, 255, 0.055);
   --glass-3: rgba(255, 255, 255, 0.08);
@@ -32,19 +32,30 @@
   --txt-4: rgba(255, 255, 255, 0.28);
 
   /* Accent */
-  --accent: #0a84ff;
-  --accent-2: #5e5ce6;
-  --accent-dim: rgba(10, 132, 255, 0.12);
-  --accent-glow: rgba(10, 132, 255, 0.35);
+  --blue: #0a84ff;
+  --indigo: #5e5ce6;
+  --purple: #bf5af2;
+  --red: #ff453a;
+  --orange: #ff9f0a;
+  --green: #30d158;
 
-  /* Status */
-  --success: #30d158;
-  --danger: #ff453a;
-  --warning: #ff9f0a;
+  /* Semantic */
+  --accent: var(--blue);
+  --accent-glow: rgba(10, 132, 255, 0.35);
+  --accent-dim: rgba(10, 132, 255, 0.12);
+  --success: var(--green);
+  --danger: var(--red);
+  --warning: var(--orange);
 
   /* Gradients */
   --grad-primary: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
   --grad-text: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 60%, #bf5af2 100%);
+  --grad-shine: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+
+  /* Blur (liquid glass) */
+  --blur-sm: blur(16px) saturate(180%);
+  --blur-md: blur(28px) saturate(180%);
+  --blur-lg: blur(40px) saturate(200%);
 
   /* Radius */
   --r-xs: 10px;
@@ -54,9 +65,12 @@
   --r-xl: 32px;
   --r-pill: 999px;
 
-  /* Shadow — KECIL (performance) */
-  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --sh-2: 0 2px 8px rgba(0, 0, 0, 0.4);
+  /* Shadows */
+  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --sh-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --sh-3: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --sh-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --sh-glow: 0 0 32px var(--accent-glow);
 
   /* Spacing */
   --sp-1: 4px;
@@ -69,18 +83,23 @@
   --sp-8: 40px;
 
   /* Typography */
-  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'Fira Code', ui-monospace, monospace;
+  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'SF Mono', ui-monospace, monospace;
 
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 15px;
+  --fs-md: 17px;
   --fs-lg: 20px;
   --fs-xl: 24px;
   --fs-2xl: 32px;
+  --fs-3xl: 42px;
 
-  /* Transition — MINIMAL */
-  --t-fast: 120ms ease;
+  /* Transitions */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --t-fast: 150ms var(--ease);
+  --t-base: 250ms var(--ease);
+  --t-slow: 400ms var(--ease);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -89,44 +108,120 @@
 body {
   font-family: var(--font-sans);
   font-size: var(--fs-base);
-  background: #000000;
+  background: var(--bg-0);
   color: var(--txt-1);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — AMBIENT (STATIC — no animation, no blur)
+   SECTION 03 — AMBIENT BACKGROUND (3 ORBS)
    ───────────────────────────────────────────────────────────── */
 .ambient {
   position: fixed;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 15%, rgba(10, 132, 255, 0.20), transparent 45%),
-    radial-gradient(circle at 85% 45%, rgba(94, 92, 230, 0.15), transparent 45%),
-    #000000;
+  background: var(--bg-0);
 }
 
-.ambient__orb,
 .ambient::before {
-  display: none;
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(10, 132, 255, 0.06), transparent 60%);
+}
+
+.ambient__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  will-change: transform;
+}
+
+.ambient__orb--a {
+  width: 380px;
+  height: 380px;
+  background: #0a84ff;
+  top: -140px;
+  left: -100px;
+  opacity: 0.32;
+  animation: float-a 22s ease-in-out infinite;
+}
+
+.ambient__orb--b {
+  width: 320px;
+  height: 320px;
+  background: #5e5ce6;
+  top: 35%;
+  right: -120px;
+  opacity: 0.28;
+  animation: float-b 26s ease-in-out infinite;
+}
+
+.ambient__orb--c {
+  width: 300px;
+  height: 300px;
+  background: #bf5af2;
+  bottom: -140px;
+  left: 25%;
+  opacity: 0.18;
+  animation: float-c 30s ease-in-out infinite;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — GLASS (SOLID — no blur, no shadow)
+   SECTION 04 — ANIMATIONS
+   ───────────────────────────────────────────────────────────── */
+@keyframes float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(40px, -60px) scale(1.08); }
+}
+
+@keyframes float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-50px, 40px) scale(0.94); }
+}
+
+@keyframes float-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(30px, -30px) scale(1.05); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — GLASS (LIQUID GLASS with backdrop-filter)
    ───────────────────────────────────────────────────────────── */
 .glass {
-  background: rgba(15, 18, 25, 0.92);
+  background: var(--glass-2);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
   border: 1px solid var(--line-2);
+  box-shadow: var(--sh-2), var(--sh-inset-top);
 }
 
 .glass--strong {
-  background: rgba(20, 24, 32, 0.95);
+  background: var(--glass-3);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
   border: 1px solid var(--line-3);
+  box-shadow: var(--sh-3), var(--sh-inset-top);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — TEXT UTILITY
+   SECTION 06 — TEXT UTILITY
    ───────────────────────────────────────────────────────────── */
 .gradient-text {
   background: var(--grad-text);
