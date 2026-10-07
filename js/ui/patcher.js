@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/patcher.js
-   Patch Tool UI — drop zone, preview, progress, report
+   Patch Tool UI + Custom Video Player
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -54,7 +54,7 @@ function onPickPatch(e) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — UPDATE FILE TAG
+   SECTION 04 — FILE TAG
    ───────────────────────────────────────────────────────────── */
 function updateFileTag(file) {
   const tag = document.getElementById('patch_filetag');
@@ -80,15 +80,103 @@ function updatePreview(file) {
   }
 
   vid.src = URL.createObjectURL(file);
-  vid.muted = false;       // ← SUARA AKTIF
-  vid.loop = false;        // ← GAK LOOP
+  vid.muted = false;
+  vid.loop = false;
   vid.playsInline = true;
-  vid.controls = true;     // ← TOMBOL PLAY/PAUSE
 
   box.hidden = false;
 
-  // Jangan auto-play — biar user kontrol
-  // vid.play().catch(function () {});
+  setupPreviewControls(vid, box);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05.1 — CUSTOM VIDEO CONTROLS
+   ───────────────────────────────────────────────────────────── */
+function setupPreviewControls(vid, box) {
+  const playBtn = document.getElementById('patch_play_btn');
+  const muteBtn = document.getElementById('patch_mute_btn');
+  const progressBar = document.getElementById('patch_progress_bar');
+  const progressFill = document.getElementById('patch_progress_fill');
+  const timeEl = document.getElementById('patch_time');
+
+  if (!playBtn || !muteBtn || !progressBar) return;
+
+  box.classList.remove('is-playing');
+  vid.pause();
+  vid.currentTime = 0;
+
+  function fmtTime(s) {
+    if (!s || isNaN(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+
+  function updateProgress() {
+    if (vid.duration) {
+      const pct = (vid.currentTime / vid.duration) * 100;
+      if (progressFill) progressFill.style.width = pct + '%';
+      if (timeEl) timeEl.textContent = fmtTime(vid.currentTime) + ' / ' + fmtTime(vid.duration);
+    }
+  }
+
+  vid.onloadedmetadata = updateProgress;
+  vid.ontimeupdate = updateProgress;
+
+  vid.onplay = function () {
+    box.classList.add('is-playing');
+    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPause = playBtn.querySelector('.icon-pause');
+    if (iconPlay) iconPlay.style.display = 'none';
+    if (iconPause) iconPause.style.display = 'block';
+  };
+
+  vid.onpause = function () {
+    box.classList.remove('is-playing');
+    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPause = playBtn.querySelector('.icon-pause');
+    if (iconPlay) iconPlay.style.display = 'block';
+    if (iconPause) iconPause.style.display = 'none';
+  };
+
+  vid.onended = vid.onpause;
+
+  vid.onvolumechange = function () {
+    const iconVol = muteBtn.querySelector('.icon-volume');
+    const iconMute = muteBtn.querySelector('.icon-muted');
+    if (vid.muted || vid.volume === 0) {
+      if (iconVol) iconVol.style.display = 'none';
+      if (iconMute) iconMute.style.display = 'block';
+    } else {
+      if (iconVol) iconVol.style.display = 'block';
+      if (iconMute) iconMute.style.display = 'none';
+    }
+  };
+
+  progressBar.onclick = function (e) {
+    const rect = progressBar.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    if (vid.duration) vid.currentTime = pct * vid.duration;
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05.2 — TOGGLE PLAY
+   ───────────────────────────────────────────────────────────── */
+function togglePatchPlay() {
+  const vid = document.getElementById('patch_video');
+  if (!vid) return;
+  if (vid.paused) vid.play().catch(function () {});
+  else vid.pause();
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05.3 — TOGGLE MUTE
+   ───────────────────────────────────────────────────────────── */
+function togglePatchMute() {
+  const vid = document.getElementById('patch_video');
+  if (!vid) return;
+  vid.muted = !vid.muted;
 }
 
 /* ─────────────────────────────────────────────────────────────
