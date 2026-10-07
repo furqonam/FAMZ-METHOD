@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/02-theme.css
-   AMOLED Black + Fake Glass (Optimized)
+   AMOLED + Minimal Design (MAX PERFORMANCE)
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -9,13 +9,13 @@
    SECTION 01 — DESIGN TOKENS
    ───────────────────────────────────────────────────────────── */
 :root {
-  /* AMOLED */
+  /* Backgrounds */
   --bg-0: #000000;
   --bg-1: #08080c;
   --bg-2: #101016;
   --bg-3: #18181f;
 
-  /* Glass (fake) */
+  /* Glass (solid) */
   --glass-1: rgba(255, 255, 255, 0.035);
   --glass-2: rgba(255, 255, 255, 0.055);
   --glass-3: rgba(255, 255, 255, 0.08);
@@ -31,27 +31,20 @@
   --txt-3: rgba(255, 255, 255, 0.48);
   --txt-4: rgba(255, 255, 255, 0.28);
 
-  /* iOS Accent */
-  --blue: #0a84ff;
-  --indigo: #5e5ce6;
-  --purple: #bf5af2;
-  --pink: #ff375f;
-  --red: #ff453a;
-  --orange: #ff9f0a;
-  --green: #30d158;
-
-  /* Semantic */
-  --accent: var(--blue);
-  --accent-glow: rgba(10, 132, 255, 0.35);
+  /* Accent */
+  --accent: #0a84ff;
+  --accent-2: #5e5ce6;
   --accent-dim: rgba(10, 132, 255, 0.12);
-  --success: var(--green);
-  --danger: var(--red);
-  --warning: var(--orange);
+  --accent-glow: rgba(10, 132, 255, 0.35);
+
+  /* Status */
+  --success: #30d158;
+  --danger: #ff453a;
+  --warning: #ff9f0a;
 
   /* Gradients */
   --grad-primary: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
   --grad-text: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 60%, #bf5af2 100%);
-  --grad-shine: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
 
   /* Radius */
   --r-xs: 10px;
@@ -59,14 +52,11 @@
   --r-md: 20px;
   --r-lg: 26px;
   --r-xl: 32px;
-  --r-2xl: 40px;
   --r-pill: 999px;
 
-  /* Shadows */
-  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --sh-2: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --sh-3: 0 16px 48px rgba(0, 0, 0, 0.5);
-  --sh-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  /* Shadow — KECIL (performance) */
+  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --sh-2: 0 2px 8px rgba(0, 0, 0, 0.4);
 
   /* Spacing */
   --sp-1: 4px;
@@ -77,27 +67,20 @@
   --sp-6: 24px;
   --sp-7: 32px;
   --sp-8: 40px;
-  --sp-9: 48px;
-  --sp-10: 64px;
 
   /* Typography */
-  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-mono: 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, monospace;
 
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 15px;
-  --fs-md: 17px;
   --fs-lg: 20px;
   --fs-xl: 24px;
   --fs-2xl: 32px;
-  --fs-3xl: 42px;
 
-  /* Transitions */
-  --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --t-fast: 150ms var(--ease);
-  --t-base: 250ms var(--ease);
-  --t-slow: 400ms var(--ease);
+  /* Transition — MINIMAL */
+  --t-fast: 120ms ease;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -106,12 +89,12 @@
 body {
   font-family: var(--font-sans);
   font-size: var(--fs-base);
-  background: var(--bg-0);
+  background: #000000;
   color: var(--txt-1);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — AMBIENT BACKGROUND (STATIC)
+   SECTION 03 — AMBIENT (STATIC — no animation, no blur)
    ───────────────────────────────────────────────────────────── */
 .ambient {
   position: fixed;
@@ -119,9 +102,8 @@ body {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 15% 15%, rgba(10, 132, 255, 0.28), transparent 45%),
-    radial-gradient(circle at 85% 45%, rgba(94, 92, 230, 0.22), transparent 45%),
-    radial-gradient(circle at 50% 95%, rgba(191, 90, 242, 0.18), transparent 50%),
+    radial-gradient(circle at 15% 15%, rgba(10, 132, 255, 0.20), transparent 45%),
+    radial-gradient(circle at 85% 45%, rgba(94, 92, 230, 0.15), transparent 45%),
     #000000;
 }
 
@@ -131,30 +113,16 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — GLASS (FAKE BLUR)
+   SECTION 04 — GLASS (SOLID — no blur, no shadow)
    ───────────────────────────────────────────────────────────── */
 .glass {
-  background: linear-gradient(
-    180deg,
-    rgba(20, 25, 35, 0.88) 0%,
-    rgba(15, 18, 25, 0.92) 100%
-  );
+  background: rgba(15, 18, 25, 0.92);
   border: 1px solid var(--line-2);
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass--strong {
-  background: linear-gradient(
-    180deg,
-    rgba(26, 30, 42, 0.94) 0%,
-    rgba(20, 24, 32, 0.96) 100%
-  );
+  background: rgba(20, 24, 32, 0.95);
   border: 1px solid var(--line-3);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -170,22 +138,4 @@ body {
 
 .mono {
   font-family: var(--font-mono);
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 06 — ANIMATIONS (minimal)
-   ───────────────────────────────────────────────────────────── */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.5; transform: scale(0.85); }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pop-in {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
 }
