@@ -6,7 +6,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 01 — SHELL (Container)
+   SECTION 01 — SHELL
    ───────────────────────────────────────────────────────────── */
 .shell {
   width: 100%;
@@ -77,7 +77,7 @@
   flex-shrink: 0;
 }
 
-/* 02.3 — TOPBAR BADGES (container) */
+/* 02.3 — TOPBAR BADGES container */
 .topbar__badges {
   display: flex;
   align-items: center;
@@ -85,7 +85,7 @@
   flex-shrink: 0;
 }
 
-/* 02.4 — TIER BADGE (Free / Basic / Pro) */
+/* 02.4 — TIER BADGE (clickable → login) */
 .tier-badge {
   padding: 4px 10px;
   font-size: 10px;
@@ -94,6 +94,12 @@
   border-radius: var(--r-pill);
   border: 1px solid;
   transition: var(--t-fast);
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.tier-badge:active {
+  transform: scale(0.95);
 }
 
 .tier-badge--free {
@@ -205,18 +211,14 @@ main {
    SECTION 06 — RESPONSIVE
    ───────────────────────────────────────────────────────────── */
 @media (max-width: 380px) {
-  .shell {
-    padding: 0 var(--sp-3);
-  }
+  .shell { padding: 0 var(--sp-3); }
 
   .topbar {
     margin-left: var(--sp-2);
     margin-right: var(--sp-2);
   }
 
-  .hero__title {
-    letter-spacing: -1px;
-  }
+  .hero__title { letter-spacing: -1px; }
 
   .tier-badge {
     padding: 3px 8px;
