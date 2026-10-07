@@ -11,7 +11,7 @@
    SECTION 01 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const SESSION_CONFIG = {
-  apiBase: 'https://famz-api.vurkonnn.workers.dev',
+  apiBase: 'https://famz-api.furqonalmughni95.workers.dev',
   storageKey: 'famz_session',
   usageKey: 'famz_usage',
   resetKey: 'famz_last_reset',
