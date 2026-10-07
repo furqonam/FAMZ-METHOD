@@ -664,3 +664,90 @@ select.field option {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 14 — LOGIN GATE (Fullscreen)
+   ───────────────────────────────────────────────────────────── */
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.3s ease;
+}
+
+.gate[hidden] { display: none; }
+
+.gate__box {
+  width: 100%;
+  max-width: 400px;
+  padding: 44px 32px;
+  text-align: center;
+  border-radius: var(--r-xl);
+  animation: pop-in 0.3s ease;
+}
+
+.gate__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.gate__mark {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  background: var(--grad-primary);
+  color: #ffffff;
+  border-radius: var(--r-lg);
+  font-size: 32px;
+  font-weight: 800;
+  box-shadow: 0 0 32px var(--accent-glow);
+}
+
+.gate__title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  color: var(--txt-1);
+}
+
+.gate__sub {
+  font-size: 13px;
+  color: var(--txt-2);
+  margin-bottom: 28px;
+}
+
+.gate__err {
+  min-height: 18px;
+  color: var(--danger);
+  font-size: 13px;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.gate__foot {
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--txt-3);
+}
+
+.gate__foot a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.gate__foot a:hover {
+  text-decoration: underline;
+}
+
+/* Body block scroll pas gate muncul */
+body:has(.gate:not([hidden])) {
+  overflow: hidden;
+}
