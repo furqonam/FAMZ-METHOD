@@ -110,7 +110,7 @@ function patchMP4(buffer, opts) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — MVHD REBUILD
+   SECTION 03 — MVHD REBUILD (spoof duration)
    ───────────────────────────────────────────────────────────── */
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
