@@ -26,9 +26,7 @@ function patchMP4(buffer, opts) {
   const before = buffer.byteLength;
 
   const arr = new Uint8Array(buffer);
-  if (!isMp4(arr)) {
-    throw new Error('File bukan MP4 valid');
-  }
+  if (!isMp4(arr)) throw new Error('File bukan MP4 valid');
 
   const dv = new DataView(arr.buffer);
   const atoms = scanAtoms(arr, dv, 0, arr.length);
@@ -42,19 +40,19 @@ function patchMP4(buffer, opts) {
 
   const repl = new Map();
 
-  /* ─── STEP A: Spoof mvhd (creation time only) ─── */
+  /* STEP A: Spoof mvhd (convert ke version 1 + spoof duration) */
   const mvhd = pickChild(moov, 'mvhd');
   if (mvhd) {
-    repl.set(mvhd, rebuildMvhdSafe(arr, dv, mvhd));
+    repl.set(mvhd, rebuildMvhd(arr, dv, mvhd));
   }
 
-  /* ─── STEP B: Spoof avc1/hvc1 resolution + btrt bitrate ─── */
+  /* STEP B: Spoof resolution + bitrate (H.264 + HEVC) */
   const platform = opts.platform || 'tiktok';
   const target = PLATFORM_TARGETS[platform] || PLATFORM_TARGETS.tiktok;
   const spoofMap = spoofResolutionAndBitrate(arr, dv, moov, target);
   spoofMap.forEach(function(v, k) { repl.set(k, v); });
 
-  /* ─── STEP C: Inject signature udta (replace, anti double-stack) ─── */
+  /* STEP C: Signature udta (replace, anti double-stack) */
   const sigUdta = buildSignatureUdta();
   const existingUdta = pickChild(moov, 'udta');
   if (existingUdta) {
@@ -63,7 +61,7 @@ function patchMP4(buffer, opts) {
     repl.set('__appendUdta__', sigUdta);
   }
 
-  /* ─── STEP D: Collect stco atoms ─── */
+  /* STEP D: Collect stco */
   const stcos = [];
   for (let i = 0; i < moov.children.length; i++) {
     const trak = moov.children[i];
@@ -74,19 +72,19 @@ function patchMP4(buffer, opts) {
     if (stco) stcos.push(stco);
   }
 
-  /* ─── STEP E: Pass 1 — rebuild with delta 0 ─── */
+  /* STEP E: Pass 1 — rebuild with delta 0 */
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), 0));
   }
   const ftypBytes = ftyp ? sliceAtomRaw(ftyp) : new Uint8Array(0);
   const moov1 = rebuildTree(moov, repl);
 
-  /* ─── STEP F: Calculate delta ─── */
+  /* STEP F: Calculate delta */
   const newMdatStart = ftypBytes.length + moov1.length;
   const oldMdatStart = mdat.offset;
   const delta = newMdatStart - oldMdatStart;
 
-  /* ─── STEP G: Pass 2 — rebuild with real delta ─── */
+  /* STEP G: Pass 2 — rebuild with real delta */
   repl.delete('__appendUdta__');
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), delta));
@@ -94,10 +92,10 @@ function patchMP4(buffer, opts) {
   const moovFinal = rebuildTree(moov, repl);
   const mdatFull = sliceAtomRaw(mdat);
 
-  /* ─── STEP H: Merge output (faststart order) ─── */
+  /* STEP H: Merge output (faststart order) */
   const output = mergeBytes([ftypBytes, moovFinal, mdatFull]);
 
-  /* ─── STEP I: Validate ─── */
+  /* STEP I: Validate */
   const validation = validatePatch(output);
 
   const elapsed = (performance.now() - t0) / 1000;
@@ -112,26 +110,45 @@ function patchMP4(buffer, opts) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — MVHD REBUILD (SAFE — only spoof creation time)
+   SECTION 03 — MVHD REBUILD (TIRU REYYTOOLS V1)
+   Convert ke version 1 (64-bit) + spoof duration
    ───────────────────────────────────────────────────────────── */
-function rebuildMvhdSafe(arr, dv, atom) {
+function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
-  const out = sliceAtomRaw(atom).slice();
-  const odv = new DataView(out.buffer, out.byteOffset);
-  const now = Math.floor(Date.now() / 1000) + 2082844800;
 
-  if (version === 0) {
-    // 32-bit times — spoof creation + modification time only
-    // Duration & timescale: KEEP ORIGINAL (biar gallery baca durasi bener)
-    odv.setUint32(12, now, false);
-    odv.setUint32(16, now, false);
-  } else {
-    // 64-bit times
-    odv.setUint32(12, 0, false);
-    odv.setUint32(16, now, false);
-    odv.setUint32(20, 0, false);
-    odv.setUint32(24, now, false);
+  // Kalau udah version 1, cuma spoof duration 64-bit
+  if (version === 1) {
+    const out = sliceAtomRaw(atom).slice();
+    const odv = new DataView(out.buffer, out.byteOffset);
+    odv.setUint32(32, 0xFFFFFFFF, false);
+    odv.setUint32(36, 0xFFFFFFFF, false);
+    return out;
   }
+
+  // Version 0 → convert ke version 1 + spoof duration
+  const ct      = dv.getUint32(atom.contentStart + 4, false);
+  const mt      = dv.getUint32(atom.contentStart + 8, false);
+  const ts      = dv.getUint32(atom.contentStart + 12, false);
+  const restSrc = atom.contentStart + 20;
+  const restLen = atom.size - 8 - 20;
+  const newSize = atom.size + 12;
+
+  const out = new Uint8Array(newSize);
+  const odv = new DataView(out.buffer);
+
+  odv.setUint32(0, newSize, false);
+  writeType(out, 4, 'mvhd');
+
+  out[8] = 1;                              // version → 1
+  odv.setUint32(12, 0, false);             // creation_time high
+  odv.setUint32(16, ct, false);            // creation_time low
+  odv.setUint32(20, 0, false);             // modification_time high
+  odv.setUint32(24, mt, false);            // modification_time low
+  odv.setUint32(28, ts, false);            // timescale (asli)
+  odv.setUint32(32, 0xFFFFFFFF, false);    // duration high (TRICK)
+  odv.setUint32(36, 0xFFFFFFFF, false);    // duration low (TRICK)
+
+  out.set(arr.slice(restSrc, restSrc + restLen), 40);
   return out;
 }
 
@@ -156,7 +173,6 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 
     const entryType = readType(arr, entryStart + 4);
 
-    // Handle H.264 (avc1/avc3) + HEVC (hvc1/hev1)
     if (entryType === 'avc1' || entryType === 'avc3' ||
         entryType === 'hvc1' || entryType === 'hev1') {
       const entrySize = dv.getUint32(entryStart, false);
@@ -165,13 +181,10 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
       const entry = arr.slice(entryStart, entryStart + entrySize).slice();
       const edv = new DataView(entry.buffer);
 
-      // Layout avc1/hvc1 sama: size(4) + type(4) + reserved(6)
-      // + data_ref(2) + width(2) + height(2)
       const wOff = 16;
       const curW = edv.getUint16(wOff, false);
       const curH = edv.getUint16(wOff + 2, false);
 
-      // Only spoof if current < target (never downscale)
       if (curW < target.width || curH < target.height) {
         const ratio = Math.min(target.width / curW, target.height / curH);
         if (ratio > 1) {
@@ -180,7 +193,6 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
         }
       }
 
-      // Spoof btrt if exists
       const btrtOff = findChildInBytes(entry, 'btrt');
       if (btrtOff > 0) {
         const bdv = new DataView(entry.buffer, btrtOff);
@@ -213,7 +225,7 @@ function findChildInBytes(bytes, type) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — REBUILD STSD WITH NEW ENTRY
+   SECTION 06 — REBUILD STSD
    ───────────────────────────────────────────────────────────── */
 function rebuildStsdWithEntry(arr, stsd, newEntry) {
   const header = arr.slice(stsd.contentStart, stsd.contentStart + 8);
@@ -221,7 +233,7 @@ function rebuildStsdWithEntry(arr, stsd, newEntry) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — REBUILD STCO (Chunk Offsets)
+   SECTION 07 — REBUILD STCO
    ───────────────────────────────────────────────────────────── */
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(8 + offsets.length * 4);
@@ -235,7 +247,7 @@ function rebuildStco(offsets, delta) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — REBUILD TREE (Recursive)
+   SECTION 08 — REBUILD TREE
    ───────────────────────────────────────────────────────────── */
 function rebuildTree(atom, repl) {
   if (repl.has(atom)) return repl.get(atom);
@@ -300,23 +312,21 @@ function buildTag(fourCC, text) {
    ───────────────────────────────────────────────────────────── */
 function buildHdlr() {
   const body = new Uint8Array(25);
-  body[8]  = 0x6d; // m
-  body[9]  = 0x64; // d
-  body[10] = 0x69; // i
-  body[11] = 0x72; // r
-  body[12] = 0x61; // a
-  body[13] = 0x70; // p
-  body[14] = 0x70; // p
-  body[15] = 0x6c; // l
+  body[8]  = 0x6d;
+  body[9]  = 0x64;
+  body[10] = 0x69;
+  body[11] = 0x72;
+  body[12] = 0x61;
+  body[13] = 0x70;
+  body[14] = 0x70;
+  body[15] = 0x6c;
   return buildAtom('hdlr', body);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MERGE UDTA (REPLACE total — anti double-stack)
+   SECTION 12 — MERGE UDTA (REPLACE — anti double-stack)
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
-  // Replace total — hapus tag lama, ganti dengan signature FAMZ
-  // Cegah double-stack kalau file udah pernah di-patch sebelumnya
   return sigUdta;
 }
 
