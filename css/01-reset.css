@@ -21,7 +21,6 @@
    SECTION 02 — HTML
    ───────────────────────────────────────────────────────────── */
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overflow-x: hidden;
@@ -36,9 +35,6 @@ body {
   min-height: 100dvh;
   line-height: 1.55;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -129,19 +125,10 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
 /* ─────────────────────────────────────────────────────────────
    SECTION 11 — SELECTION
    ───────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(10, 132, 255, 0.35);
-  color: #ffffff;
-}
-
-::-moz-selection {
   background: rgba(10, 132, 255, 0.35);
   color: #ffffff;
 }
@@ -179,7 +166,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 15 — GPU OPTIMIZATION
+   SECTION 15 — GPU ACCELERATION
    ───────────────────────────────────────────────────────────── */
 .tab,
 .btn,
@@ -188,23 +175,10 @@ h1, h2, h3, h4, h5, h6 {
 .topbar,
 .tabs,
 .footer__btn,
-.support-btn {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.tab__icon,
-.brand__dot,
+.support-btn,
 .social-link,
 .tier-badge {
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-}
-
-.ambient,
-.card,
-.topbar {
-  contain: layout paint;
 }
