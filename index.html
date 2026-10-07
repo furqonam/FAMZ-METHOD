@@ -153,32 +153,6 @@
           <video id="patch_video" playsinline muted loop></video>
         </div>
 
-        <!-- MODE SELECTOR -->
-        <label class="field-label">Mode</label>
-        <div class="modes">
-          <button class="mode is-active" data-mode="patch" onclick="pickPatchMode('patch')">
-            <span class="mode__icon">◆</span>
-            <span class="mode__text">
-              <b>Patch</b>
-              <i>Standard patch — rebuild + spoof</i>
-            </span>
-          </button>
-          <button class="mode" data-mode="boost60" onclick="pickPatchMode('boost60')">
-            <span class="mode__icon">⚡</span>
-            <span class="mode__text">
-              <b>Boost 60 FPS</b>
-              <i>Frame rate hint — smooth playback</i>
-            </span>
-          </button>
-          <button class="mode" data-mode="speed" onclick="pickPatchMode('speed')">
-            <span class="mode__icon">⏩</span>
-            <span class="mode__text">
-              <b>Speed Tune</b>
-              <i>Timing optimization — faster video</i>
-            </span>
-          </button>
-        </div>
-
         <div class="status" id="patch_status">
           <span class="status__dot"></span>
           <span class="status__text" id="patch_status_text">Siap</span>
