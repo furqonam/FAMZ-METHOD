@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/05-tabs.css
-   Tab switcher (iOS Segmented Control) + Tool sections
+   Tab switcher + icon SVG
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 01 — TABS CONTAINER (iOS Segmented Control)
+   SECTION 01 — TABS CONTAINER
    ───────────────────────────────────────────────────────────── */
 .tabs {
   display: flex;
@@ -25,9 +25,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.tabs::-webkit-scrollbar {
-  display: none;
-}
+.tabs::-webkit-scrollbar { display: none; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — TAB BUTTON
@@ -39,7 +37,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-pill);
   font-size: var(--fs-xs);
@@ -50,10 +48,26 @@
   position: relative;
 }
 
+/* 02.1 — ICON SVG */
 .tab__icon {
-  font-size: 16px;
-  line-height: 1;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: inherit;
   transition: transform var(--t-base);
+  flex-shrink: 0;
+}
+
+.tab__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .tab__label {
@@ -62,9 +76,7 @@
   text-transform: uppercase;
 }
 
-.tab:active {
-  transform: scale(0.96);
-}
+.tab:active { transform: scale(0.96); }
 
 .tab.is-active {
   background: var(--grad-primary);
@@ -73,15 +85,13 @@
 }
 
 .tab.is-active .tab__icon {
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — TOOL SECTIONS (Panel)
+   SECTION 03 — TOOL SECTIONS
    ───────────────────────────────────────────────────────────── */
-.tool {
-  display: none;
-}
+.tool { display: none; }
 
 .tool.is-active {
   display: block;
@@ -89,7 +99,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — SETTINGS BLOCK (Encoder)
+   SECTION 04 — SETTINGS BLOCK
    ───────────────────────────────────────────────────────────── */
 .settings {
   margin-bottom: var(--sp-4);
@@ -99,37 +109,16 @@
   border-radius: var(--r-sm);
 }
 
-.settings .field-label:first-child {
-  margin-top: 0;
-}
-
-.settings .field {
-  margin-bottom: var(--sp-2);
-}
-
-.settings .field:last-child {
-  margin-bottom: 0;
-}
+.settings .field-label:first-child { margin-top: 0; }
+.settings .field { margin-bottom: var(--sp-2); }
+.settings .field:last-child { margin-bottom: 0; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 05 — RESPONSIVE
    ───────────────────────────────────────────────────────────── */
 @media (max-width: 380px) {
-  .tabs {
-    padding: 3px;
-    gap: 2px;
-  }
-
-  .tab {
-    min-width: 60px;
-    padding: var(--sp-2);
-  }
-
-  .tab__icon {
-    font-size: 14px;
-  }
-
-  .tab__label {
-    font-size: 9px;
-  }
+  .tabs { padding: 3px; gap: 2px; }
+  .tab { min-width: 60px; padding: var(--sp-2); }
+  .tab__icon { width: 16px; height: 16px; }
+  .tab__label { font-size: 9px; }
 }
