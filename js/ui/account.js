@@ -77,7 +77,6 @@ function renderAccount() {
   if (tgInput) tgInput.value = _account.tgId || '';
   if (userInput) userInput.value = _account.tgUser || '';
 
-  // Avatar
   if (imgEl && _account.avatar) {
     imgEl.src = _account.avatar;
     imgEl.style.display = 'block';
@@ -141,35 +140,6 @@ function onPickAvatar(e) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — LINK / UNLINK TELEGRAM
-   ───────────────────────────────────────────────────────────── */
-function linkTelegram() {
-  const idEl = document.getElementById('tg_id');
-  const userEl = document.getElementById('tg_user');
-  const id = (idEl ? idEl.value : '').trim();
-  const user = (userEl ? userEl.value : '').trim();
-
-  if (!id) {
-    showToast('Masukkan TG ID dulu', 'error');
-    return;
-  }
-
-  _account.tgId = id;
-  _account.tgUser = user;
-  localStorage.setItem('famz_account', JSON.stringify(_account));
-  renderAccount();
-  showToast('Telegram linked', 'success');
-}
-
-function unlinkTelegram() {
-  _account.tgId = '';
-  _account.tgUser = '';
-  localStorage.setItem('famz_account', JSON.stringify(_account));
-  renderAccount();
-  showToast('Telegram unlinked', 'success');
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 07 — EXPORT
+   SECTION 06 — EXPORT
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] account.js loaded');
