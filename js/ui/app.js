@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/app.js
-   App Orchestration + Gate + Account + Badges
+   App Orchestration + Gate + Account + Badges + Support
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -17,6 +17,9 @@ function esc(text) {
   const div = document.createElement('div');
   div.textContent = String(text || '');
   return div.innerHTML;
+}
+function openSupport() {
+  window.open('https://sociabuzz.com/famzid/support', '_blank', 'noopener,noreferrer');
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -123,7 +126,7 @@ function showQuotaModal(message) {
       '<p class="modal__text">' + esc(message || 'Kuota harian lu udah abis. Upgrade buat unlimited.') + '</p>',
       '<div class="modal__actions">',
         '<button class="btn btn--ghost" id="famz_quota_close">Nanti</button>',
-        '<button class="btn btn--primary" id="famz_quota_upgrade">Upgrade</button>',
+        '<button class="btn btn--primary" id="famz_quota_upgrade">Support</button>',
       '</div>',
     '</div>'
   ].join('');
@@ -146,7 +149,7 @@ function showQuotaModal(message) {
   const upgradeBtn = document.getElementById('famz_quota_upgrade');
   if (upgradeBtn) {
     upgradeBtn.addEventListener('click', function () {
-      window.open('https://t.me/famz_bot', '_blank');
+      window.open('https://t.me/vurkonnn', '_blank');
     });
   }
 }
