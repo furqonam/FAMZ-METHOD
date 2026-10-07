@@ -80,13 +80,15 @@ function updatePreview(file) {
   }
 
   vid.src = URL.createObjectURL(file);
-  vid.muted = true;
-  vid.loop = true;
+  vid.muted = false;       // ← SUARA AKTIF
+  vid.loop = false;        // ← GAK LOOP
   vid.playsInline = true;
+  vid.controls = true;     // ← TOMBOL PLAY/PAUSE
 
   box.hidden = false;
 
-  vid.play().catch(function () {});
+  // Jangan auto-play — biar user kontrol
+  // vid.play().catch(function () {});
 }
 
 /* ─────────────────────────────────────────────────────────────
