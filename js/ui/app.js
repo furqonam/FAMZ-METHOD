@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/app.js
-   App Orchestration + Login Modal + Tier Badge + Account
+   App Orchestration + Gate + Account + Badges
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -20,7 +20,78 @@ function esc(text) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 02 — LOGIN MODAL
+   SECTION 02 — GATE (Login Fullscreen)
+   ───────────────────────────────────────────────────────────── */
+function openGate(msg) {
+  const gate = document.getElementById('gate');
+  if (gate) gate.hidden = false;
+  if (msg) showGateErr(msg);
+
+  setTimeout(function () {
+    const input = document.getElementById('gate_input');
+    if (input) input.focus();
+  }, 300);
+}
+
+function closeGate() {
+  const gate = document.getElementById('gate');
+  if (gate) gate.hidden = true;
+}
+
+function showGateErr(msg) {
+  const el = document.getElementById('gate_err');
+  if (el) {
+    el.textContent = msg;
+    el.classList.add('is-show');
+  }
+}
+
+function clearGateErr() {
+  const el = document.getElementById('gate_err');
+  if (el) {
+    el.textContent = '';
+    el.classList.remove('is-show');
+  }
+}
+
+async function gateLogin() {
+  const input = document.getElementById('gate_input');
+  const btn = document.getElementById('gate_btn');
+  const val = input ? input.value.trim().toLowerCase().replace(/^@/, '') : '';
+
+  clearGateErr();
+
+  if (!val || val.length < 3) {
+    showGateErr('Masukkan username atau TG ID (min 3 karakter)');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Checking...';
+  }
+
+  try {
+    await sessionLogin(val);
+
+    closeGate();
+    updateTierBadge();
+
+    const session = sessionGet();
+    showToast('Welcome — ' + session.tier.toUpperCase(), 'success');
+
+  } catch (err) {
+    console.error('[gate]', err);
+    showGateErr(err.message || 'Login gagal. Coba lagi.');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Continue';
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — TIER BADGE
    ───────────────────────────────────────────────────────────── */
 function handleTierClick() {
   const session = typeof sessionGet === 'function' ? sessionGet() : null;
@@ -31,70 +102,13 @@ function handleTierClick() {
       openAccountModal();
     }
   } else {
-    // Belum login → buka Login Modal
-    openLoginModal();
-  }
-}
-
-function openLoginModal() {
-  const modal = document.getElementById('login_modal');
-  if (!modal) return;
-
-  modal.classList.add('is-show');
-
-  setTimeout(function () {
-    const input = document.getElementById('login_input');
-    if (input) input.focus();
-  }, 300);
-}
-
-function closeLoginModal() {
-  const modal = document.getElementById('login_modal');
-  if (!modal) return;
-  modal.classList.remove('is-show');
-
-  const input = document.getElementById('login_input');
-  if (input) input.value = '';
-}
-
-async function doLogin() {
-  const input = document.getElementById('login_input');
-  const btn = document.getElementById('login_submit');
-  const val = input ? input.value.trim().toLowerCase().replace(/^@/, '') : '';
-
-  if (!val || val.length < 3) {
-    showToast('Masukkan username atau TG ID', 'error');
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Loading...';
-  }
-
-  try {
-    await sessionLogin(val);
-
-    closeLoginModal();
-    updateTierBadge();
-
-    const session = sessionGet();
-    showToast('Login berhasil — ' + session.tier.toUpperCase(), 'success');
-
-    setTimeout(function () { location.reload(); }, 1000);
-
-  } catch (err) {
-    console.error('[login]', err);
-    showToast(err.message || 'Login gagal', 'error');
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Login';
-    }
+    // Belum login → buka gate
+    openGate();
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — QUOTA MODAL
+   SECTION 04 — QUOTA MODAL
    ───────────────────────────────────────────────────────────── */
 function showQuotaModal(message) {
   const old = document.getElementById('famz_quota_modal');
@@ -140,7 +154,7 @@ function showQuotaModal(message) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — TOOL INIT
+   SECTION 05 — TOOL INIT
    ───────────────────────────────────────────────────────────── */
 function initAllTools() {
   try { if (typeof initPatcher === 'function') initPatcher(); } catch (e) { console.warn('[init] patcher', e); }
@@ -151,7 +165,7 @@ function initAllTools() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — BADGES
+   SECTION 06 — BADGES
    ───────────────────────────────────────────────────────────── */
 function updateQuotaBadges() {
   const features = ['patch', 'encode', 'upscale', 'analyze'];
@@ -199,7 +213,7 @@ function updateTierBadge() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — PWA SERVICE WORKER
+   SECTION 07 — PWA SERVICE WORKER
    ───────────────────────────────────────────────────────────── */
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -223,7 +237,7 @@ async function registerServiceWorker() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — HANDLERS
+   SECTION 08 — HANDLERS
    ───────────────────────────────────────────────────────────── */
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
@@ -260,7 +274,7 @@ function initErrorBoundary() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — APP INIT
+   SECTION 09 — APP INIT
    ───────────────────────────────────────────────────────────── */
 async function initApp() {
   console.log('[FAMZ] Starting app...');
@@ -272,45 +286,68 @@ async function initApp() {
     console.warn('[init] session failed', e);
   }
 
-  // 2. Tabs
+  // 2. Cek session — kalo gak login, buka gate
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+  const hasSavedSession = localStorage.getItem('famz_session');
+
+  if (!session || !session.connected) {
+    // Kalo gak ada saved session → gate wajib
+    if (!hasSavedSession) {
+      openGate();
+    } else {
+      // Ada saved tapi belum connect → verify dulu
+      try {
+        const saved = JSON.parse(hasSavedSession);
+        if (saved && saved.username) {
+          await sessionLogin(saved.username).catch(function () {
+            openGate();
+          });
+        }
+      } catch (e) {
+        openGate();
+      }
+    }
+  }
+
+  // 3. Tabs
   try {
     if (typeof initTabs === 'function') initTabs();
   } catch (e) {
     console.warn('[init] tabs failed', e);
   }
 
-  // 3. All tools
+  // 4. All tools
   initAllTools();
 
-  // 4. Badges
+  // 5. Badges
   updateQuotaBadges();
   initAppBadge();
   updateTierBadge();
 
-  // 4.1 Load account
+  // 6. Load account
   try {
     if (typeof loadAccount === 'function') loadAccount();
   } catch (e) {
     console.warn('[init] account failed', e);
   }
 
-  // 5. PWA
+  // 7. PWA
   registerServiceWorker();
 
-  // 6. Handlers
+  // 8. Handlers
   initVisibilityHandler();
   initErrorBoundary();
 
-  // 7. Welcome + refresh tier
+  // 9. Welcome toast (kalo udah login)
   setTimeout(function () {
-    const session = typeof sessionGet === 'function' ? sessionGet() : null;
-    if (session && session.connected) {
-      showToast('Welcome back — ' + (session.tier || 'free').toUpperCase(), 'success');
+    const s = typeof sessionGet === 'function' ? sessionGet() : null;
+    if (s && s.connected) {
+      showToast('Welcome back — ' + (s.tier || 'free').toUpperCase(), 'success');
     }
     updateTierBadge();
   }, 800);
 
-  // 8. Encoder detection
+  // 10. Encoder detection
   if (typeof detectEncoderSupport === 'function') {
     detectEncoderSupport().then(function (supported) {
       console.log('[FAMZ] Encoder mode:', supported ? 'WebCodecs' : 'FFmpeg');
@@ -321,6 +358,6 @@ async function initApp() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — EXPORT
+   SECTION 10 — EXPORT
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] app.js loaded');
