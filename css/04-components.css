@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/04-components.css
-   Card, Button, Drop, Progress, Status, Report, Preview, Toast, Modal
+   Card, Button, Drop, Progress, Status, Report, Preview, Toast,
+   Modal, Account, Gate, Support
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -66,9 +67,7 @@
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-.field::placeholder {
-  color: var(--txt-4);
-}
+.field::placeholder { color: var(--txt-4); }
 
 select.field {
   appearance: none;
@@ -80,10 +79,7 @@ select.field {
   padding-right: 36px;
 }
 
-select.field option {
-  background: var(--bg-3);
-  color: var(--txt-1);
-}
+select.field option { background: var(--bg-3); color: var(--txt-1); }
 
 .hint {
   font-size: 11px;
@@ -125,16 +121,8 @@ select.field option {
   filter: drop-shadow(0 0 12px var(--accent-glow));
 }
 
-.drop__title {
-  font-size: var(--fs-base);
-  font-weight: 700;
-  color: var(--txt-1);
-}
-
-.drop__sub {
-  font-size: var(--fs-xs);
-  color: var(--txt-3);
-}
+.drop__title { font-size: var(--fs-base); font-weight: 700; color: var(--txt-1); }
+.drop__sub { font-size: var(--fs-xs); color: var(--txt-3); }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 04 — FILE TAG
@@ -162,11 +150,7 @@ select.field option {
   min-width: 0;
 }
 
-.filetag__size {
-  color: var(--accent);
-  font-weight: 600;
-  flex-shrink: 0;
-}
+.filetag__size { color: var(--accent); font-weight: 600; flex-shrink: 0; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 05 — PREVIEW
@@ -182,24 +166,10 @@ select.field option {
   box-shadow: var(--sh-2);
 }
 
-.preview video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
-}
+.preview video { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
-.preview--image {
-  aspect-ratio: auto;
-  max-height: 400px;
-}
-
-.preview--image img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
-}
+.preview--image { aspect-ratio: auto; max-height: 400px; }
+.preview--image img { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 06 — STATUS INDICATOR
@@ -232,20 +202,10 @@ select.field option {
   animation: pulse-dot 1s ease-in-out infinite;
 }
 
-.status.is-success .status__dot {
-  background: var(--success);
-  box-shadow: 0 0 12px var(--success);
-}
+.status.is-success .status__dot { background: var(--success); box-shadow: 0 0 12px var(--success); }
+.status.is-error .status__dot { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
 
-.status.is-error .status__dot {
-  background: var(--danger);
-  box-shadow: 0 0 12px var(--danger);
-}
-
-.status__text {
-  flex: 1;
-  font-weight: 500;
-}
+.status__text { flex: 1; font-weight: 500; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 07 — PROGRESS BAR
@@ -295,31 +255,11 @@ select.field option {
   line-height: 1.7;
 }
 
-.progress__log:empty {
-  display: none;
-  padding: 0;
-  border: 0;
-  margin: 0;
-}
-
-.progress__log > div {
-  opacity: 0.6;
-}
-
-.progress__log > div:last-child {
-  opacity: 1;
-  color: var(--accent);
-}
-
-.progress__log > div.is-error {
-  color: var(--danger);
-  opacity: 1;
-}
-
-.progress__log > div.is-done {
-  color: var(--success);
-  opacity: 0.9;
-}
+.progress__log:empty { display: none; padding: 0; border: 0; margin: 0; }
+.progress__log > div { opacity: 0.6; }
+.progress__log > div:last-child { opacity: 1; color: var(--accent); }
+.progress__log > div.is-error { color: var(--danger); opacity: 1; }
+.progress__log > div.is-done { color: var(--success); opacity: 0.9; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 08 — REPORT CARD
@@ -341,10 +281,7 @@ select.field option {
   font-size: var(--fs-xs);
 }
 
-.report__row span:first-child {
-  color: var(--txt-3);
-}
-
+.report__row span:first-child { color: var(--txt-3); }
 .report__row span:last-child {
   font-family: var(--font-mono);
   font-weight: 600;
@@ -352,7 +289,7 @@ select.field option {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — RESULT CARD (Analyzer)
+   SECTION 09 — RESULT CARD
    ───────────────────────────────────────────────────────────── */
 .result {
   margin-bottom: var(--sp-4);
@@ -370,30 +307,13 @@ select.field option {
   text-align: center;
 }
 
-.result__badge--ok {
-  background: rgba(48, 209, 88, 0.08);
-  border: 1px solid rgba(48, 209, 88, 0.25);
-}
+.result__badge--ok { background: rgba(48, 209, 88, 0.08); border: 1px solid rgba(48, 209, 88, 0.25); }
+.result__badge--no { background: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.25); }
 
-.result__badge--no {
-  background: rgba(255, 69, 58, 0.08);
-  border: 1px solid rgba(255, 69, 58, 0.25);
-}
-
-.result__badge b {
-  display: block;
-  font-size: var(--fs-base);
-  margin-bottom: var(--sp-1);
-}
-
+.result__badge b { display: block; font-size: var(--fs-base); margin-bottom: var(--sp-1); }
 .result__badge--ok b { color: var(--success); }
 .result__badge--no b { color: var(--danger); }
-
-.result__badge i {
-  font-style: normal;
-  font-size: var(--fs-xs);
-  color: var(--txt-2);
-}
+.result__badge i { font-style: normal; font-size: var(--fs-xs); color: var(--txt-2); }
 
 .result__grid {
   display: grid;
@@ -462,10 +382,17 @@ select.field option {
   box-shadow: var(--sh-1), 0 0 16px var(--accent-glow);
 }
 
-.btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  filter: grayscale(0.5);
+.btn:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.5); }
+
+.btn--ghost {
+  color: var(--txt-2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-2);
+}
+
+.btn--ghost:active {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(0.97);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -496,28 +423,13 @@ select.field option {
   text-overflow: ellipsis;
 }
 
-.toast.is-show {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-
-.toast.is-error {
-  border-color: rgba(255, 69, 58, 0.4);
-  color: var(--danger);
-}
-
-.toast.is-success {
-  border-color: rgba(48, 209, 88, 0.4);
-  color: var(--success);
-}
-
-.toast.is-warning {
-  border-color: rgba(255, 159, 10, 0.4);
-  color: var(--warning);
-}
+.toast.is-show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.is-error { border-color: rgba(255, 69, 58, 0.4); color: var(--danger); }
+.toast.is-success { border-color: rgba(48, 209, 88, 0.4); color: var(--success); }
+.toast.is-warning { border-color: rgba(255, 159, 10, 0.4); color: var(--warning); }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MODAL (Quota + Login + Account)
+   SECTION 12 — MODAL
    ───────────────────────────────────────────────────────────── */
 .modal {
   position: fixed;
@@ -532,10 +444,7 @@ select.field option {
   transition: opacity var(--t-base);
 }
 
-.modal.is-show {
-  opacity: 1;
-  pointer-events: auto;
-}
+.modal.is-show { opacity: 1; pointer-events: auto; }
 
 .modal__backdrop {
   position: absolute;
@@ -557,43 +466,11 @@ select.field option {
   animation: pop-in var(--t-base);
 }
 
-.modal__icon {
-  font-size: 48px;
-  margin-bottom: var(--sp-3);
-}
-
-.modal__title {
-  font-size: var(--fs-lg);
-  font-weight: 800;
-  margin-bottom: var(--sp-2);
-}
-
-.modal__text {
-  font-size: var(--fs-sm);
-  color: var(--txt-2);
-  margin-bottom: var(--sp-5);
-  line-height: 1.6;
-}
-
-.modal__actions {
-  display: flex;
-  gap: var(--sp-2);
-}
-
-.modal__actions .btn {
-  flex: 1;
-}
-
-.btn--ghost {
-  color: var(--txt-2);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--line-2);
-}
-
-.btn--ghost:active {
-  background: rgba(255, 255, 255, 0.08);
-  transform: scale(0.97);
-}
+.modal__icon { font-size: 48px; margin-bottom: var(--sp-3); }
+.modal__title { font-size: var(--fs-lg); font-weight: 800; margin-bottom: var(--sp-2); }
+.modal__text { font-size: var(--fs-sm); color: var(--txt-2); margin-bottom: var(--sp-5); line-height: 1.6; }
+.modal__actions { display: flex; gap: var(--sp-2); }
+.modal__actions .btn { flex: 1; }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 13 — ACCOUNT MODAL
@@ -628,10 +505,7 @@ select.field option {
   transition: var(--t-fast);
 }
 
-.avatar:active {
-  transform: scale(0.95);
-  border-color: var(--accent);
-}
+.avatar:active { transform: scale(0.95); border-color: var(--accent); }
 
 .avatar img {
   position: absolute;
@@ -643,10 +517,7 @@ select.field option {
   border-radius: 50%;
 }
 
-.account__who {
-  flex: 1;
-  min-width: 0;
-}
+.account__who { flex: 1; min-width: 0; }
 
 .who {
   font-size: 1.1rem;
@@ -666,7 +537,7 @@ select.field option {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 14 — LOGIN GATE (Fullscreen)
+   SECTION 14 — LOGIN GATE
    ───────────────────────────────────────────────────────────── */
 .gate {
   position: fixed;
@@ -743,11 +614,83 @@ select.field option {
   font-weight: 600;
 }
 
-.gate__foot a:hover {
-  text-decoration: underline;
+.gate__foot a:hover { text-decoration: underline; }
+
+body:has(.gate:not([hidden])) { overflow: hidden; }
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 15 — SUPPORT BUTTON
+   ───────────────────────────────────────────────────────────── */
+.support-btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  border-radius: 50%;
+  color: #ff453a;
+  cursor: pointer;
+  transition: var(--t-fast);
+  flex-shrink: 0;
+  padding: 0;
 }
 
-/* Body block scroll pas gate muncul */
-body:has(.gate:not([hidden])) {
-  overflow: hidden;
+.support-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 69, 58, 0.2);
+  box-shadow: 0 0 12px rgba(255, 69, 58, 0.4);
+}
+
+.support-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.footer__actions {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.footer__btn {
+  width: auto;
+  padding: 12px 24px;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.footer__btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.footer__socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.footer__socials a {
+  color: var(--txt-2);
+  transition: var(--t-fast);
+}
+
+.footer__socials a:hover {
+  color: var(--accent);
+}
+
+.footer__socials span {
+  color: var(--txt-4);
 }
