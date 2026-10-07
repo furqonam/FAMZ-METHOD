@@ -1,17 +1,15 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/app.js
-   App Orchestration — init semua UI + modal + PWA
+   App Orchestration + Login Modal + Tier Badge
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
 'use strict';
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 01 — QUOTA MODAL
+   SECTION 01 — HELPERS
    ───────────────────────────────────────────────────────────── */
-
-/* Helper lokal — jangan depend ke queue-ui.js */
 function esc(text) {
   if (typeof escapeHtml === 'function') {
     try { return escapeHtml(text); } catch (e) {}
@@ -21,6 +19,89 @@ function esc(text) {
   return div.innerHTML;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   SECTION 02 — LOGIN MODAL
+   ───────────────────────────────────────────────────────────── */
+function handleTierClick() {
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+
+  if (session && session.connected) {
+    // Udah login → confirm logout
+    if (confirm('Logout dari akun ini?')) {
+      if (typeof sessionLogout === 'function') sessionLogout();
+      updateTierBadge();
+      showToast('Logout berhasil', 'success');
+      setTimeout(function () { location.reload(); }, 800);
+    }
+  } else {
+    // Belum login → buka modal
+    openLoginModal();
+  }
+}
+
+function openLoginModal() {
+  const modal = document.getElementById('login_modal');
+  if (!modal) return;
+
+  modal.classList.add('is-show');
+
+  // Focus ke input
+  setTimeout(function () {
+    const input = document.getElementById('login_input');
+    if (input) input.focus();
+  }, 300);
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById('login_modal');
+  if (!modal) return;
+  modal.classList.remove('is-show');
+
+  // Clear input
+  const input = document.getElementById('login_input');
+  if (input) input.value = '';
+}
+
+async function doLogin() {
+  const input = document.getElementById('login_input');
+  const btn = document.getElementById('login_submit');
+  const val = input ? input.value.trim().toLowerCase().replace(/^@/, '') : '';
+
+  if (!val || val.length < 3) {
+    showToast('Masukkan username atau TG ID', 'error');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+  }
+
+  try {
+    await sessionLogin(val);
+
+    closeLoginModal();
+    updateTierBadge();
+
+    const session = sessionGet();
+    showToast('Login berhasil — ' + session.tier.toUpperCase(), 'success');
+
+    // Reload biar UI refresh
+    setTimeout(function () { location.reload(); }, 1000);
+
+  } catch (err) {
+    console.error('[login]', err);
+    showToast(err.message || 'Login gagal', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — QUOTA MODAL
+   ───────────────────────────────────────────────────────────── */
 function showQuotaModal(message) {
   const old = document.getElementById('famz_quota_modal');
   if (old) old.remove();
@@ -43,9 +124,7 @@ function showQuotaModal(message) {
 
   document.body.appendChild(modal);
 
-  requestAnimationFrame(function () {
-    modal.classList.add('is-show');
-  });
+  requestAnimationFrame(function () { modal.classList.add('is-show'); });
 
   const close = function () {
     modal.classList.remove('is-show');
@@ -67,7 +146,7 @@ function showQuotaModal(message) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 02 — TOOL INIT REGISTRY
+   SECTION 04 — TOOL INIT
    ───────────────────────────────────────────────────────────── */
 function initAllTools() {
   try { if (typeof initPatcher === 'function') initPatcher(); } catch (e) { console.warn('[init] patcher', e); }
@@ -78,7 +157,7 @@ function initAllTools() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — QUOTA BADGE UPDATE
+   SECTION 05 — BADGES
    ───────────────────────────────────────────────────────────── */
 function updateQuotaBadges() {
   const features = ['patch', 'encode', 'upscale', 'analyze'];
@@ -102,16 +181,37 @@ function updateQuotaBadges() {
   }
 }
 
+function initAppBadge() {
+  const badge = document.querySelector('.badge');
+  if (badge && !badge.textContent.trim()) {
+    badge.textContent = 'v1.0';
+  }
+}
+
+function updateTierBadge() {
+  const el = document.getElementById('tier_badge');
+  if (!el) return;
+
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+
+  if (session && session.connected) {
+    const tier = session.tier || 'free';
+    el.textContent = tier.toUpperCase();
+    el.className = 'tier-badge tier-badge--' + tier;
+  } else {
+    el.textContent = 'LOGIN';
+    el.className = 'tier-badge tier-badge--free';
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — PWA SERVICE WORKER
+   SECTION 06 — PWA SERVICE WORKER
    ───────────────────────────────────────────────────────────── */
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
   try {
-    const reg = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/'
-    });
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
     reg.addEventListener('updatefound', function () {
       const newWorker = reg.installing;
@@ -129,51 +229,18 @@ async function registerServiceWorker() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — APP BADGE (Header Version)
-   ───────────────────────────────────────────────────────────── */
-function initAppBadge() {
-  const badge = document.querySelector('.badge');
-  if (badge && !badge.textContent.trim()) {
-    badge.textContent = 'v1.0';
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 05.1 — TIER BADGE (Free / Basic / Pro)
-   ───────────────────────────────────────────────────────────── */
-function updateTierBadge() {
-  const el = document.getElementById('tier_badge');
-  if (!el) return;
-
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-  const tier = (session && session.connected) ? (session.tier || 'free') : 'free';
-
-  el.textContent = tier.toUpperCase();
-  el.className = 'tier-badge tier-badge--' + tier;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 06 — VISIBILITY HANDLER
+   SECTION 07 — HANDLERS
    ───────────────────────────────────────────────────────────── */
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      if (typeof autoResetQuota === 'function') {
-        autoResetQuota();
-      }
-      if (typeof updateQuotaBadges === 'function') {
-        updateQuotaBadges();
-      }
-      if (typeof updateTierBadge === 'function') {
-        updateTierBadge();
-      }
+      if (typeof autoResetQuota === 'function') autoResetQuota();
+      if (typeof updateQuotaBadges === 'function') updateQuotaBadges();
+      if (typeof updateTierBadge === 'function') updateTierBadge();
     }
   });
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SECTION 07 — ERROR BOUNDARY
-   ───────────────────────────────────────────────────────────── */
 function initErrorBoundary() {
   window.addEventListener('error', function (e) {
     try {
@@ -199,61 +266,57 @@ function initErrorBoundary() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — APP INIT (Main)
+   SECTION 08 — APP INIT
    ───────────────────────────────────────────────────────────── */
 async function initApp() {
   console.log('[FAMZ] Starting app...');
 
   // 1. Session init
   try {
-    if (typeof sessionInit === 'function') {
-      await sessionInit();
-    }
+    if (typeof sessionInit === 'function') await sessionInit();
   } catch (e) {
     console.warn('[init] session failed', e);
   }
 
-  // 2. Init tabs
+  // 2. Tabs
   try {
     if (typeof initTabs === 'function') initTabs();
   } catch (e) {
     console.warn('[init] tabs failed', e);
   }
 
-  // 3. Init all tools
+  // 3. All tools
   initAllTools();
 
-  // 4. Update UI badges
+  // 4. Badges
   updateQuotaBadges();
   initAppBadge();
   updateTierBadge();
 
-  // 5. Register service worker
+  // 5. PWA
   registerServiceWorker();
 
-  // 6. Setup handlers
+  // 6. Handlers
   initVisibilityHandler();
   initErrorBoundary();
 
-  // 7. Welcome toast + update tier
+  // 7. Welcome + refresh tier
   setTimeout(function () {
     const session = typeof sessionGet === 'function' ? sessionGet() : null;
     if (session && session.connected) {
-      const tier = session.tier || 'free';
-      showToast('Welcome back — ' + tier.toUpperCase(), 'success');
+      showToast('Welcome back — ' + (session.tier || 'free').toUpperCase(), 'success');
     }
     updateTierBadge();
   }, 800);
 
-  // 8. Detect encoder mode
+  // 8. Encoder detection
   if (typeof detectEncoderSupport === 'function') {
     detectEncoderSupport().then(function (supported) {
-      const mode = supported ? 'WebCodecs (fast)' : 'FFmpeg (fallback)';
-      console.log('[FAMZ] Encoder mode:', mode);
+      console.log('[FAMZ] Encoder mode:', supported ? 'WebCodecs' : 'FFmpeg');
     }).catch(function () {});
   }
 
-  console.log('[FAMZ] App ready — 𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬');
+  console.log('[FAMZ] App ready');
 }
 
 /* ─────────────────────────────────────────────────────────────
