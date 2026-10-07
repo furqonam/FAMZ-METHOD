@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════════════════════════
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+   css/06-queue.css
+   Batch Queue UI
+   © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 01 — QUEUE CONTAINER
+   ───────────────────────────────────────────────────────────── */
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.queue:empty {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 02 — QUEUE ITEM
+   ───────────────────────────────────────────────────────────── */
+.queue__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--glass-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  transition: var(--t-base);
+  animation: fade-in var(--t-base);
+}
+
+.queue__item.is-processing {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.queue__item.is-done {
+  border-color: rgba(48, 209, 88, 0.3);
+  background: rgba(48, 209, 88, 0.05);
+}
+
+.queue__item.is-error {
+  border-color: rgba(255, 69, 58, 0.3);
+  background: rgba(255, 69, 58, 0.05);
+}
+
+/* 02.1 — ICON */
+.queue__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--r-xs);
+  font-size: 16px;
+  color: var(--txt-3);
+  flex-shrink: 0;
+}
+
+.queue__item.is-processing .queue__icon {
+  color: var(--accent);
+  background: rgba(10, 132, 255, 0.12);
+}
+
+.queue__item.is-done .queue__icon {
+  color: var(--success);
+  background: rgba(48, 209, 88, 0.12);
+}
+
+.queue__item.is-error .queue__icon {
+  color: var(--danger);
+  background: rgba(255, 69, 58, 0.12);
+}
+
+/* 02.2 — INFO */
+.queue__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue__name {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--txt-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.queue__meta {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--txt-3);
+}
+
+.queue__item.is-processing .queue__meta { color: var(--accent); }
+.queue__item.is-done .queue__meta { color: var(--success); }
+.queue__item.is-error .queue__meta { color: var(--danger); }
+
+/* 02.3 — REMOVE BUTTON */
+.queue__remove {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--txt-4);
+  font-size: 14px;
+  line-height: 1;
+  transition: var(--t-fast);
+  flex-shrink: 0;
+}
+
+.queue__remove:hover,
+.queue__remove:active {
+  background: rgba(255, 69, 58, 0.15);
+  color: var(--danger);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — QUEUE PROGRESS (Mini)
+   ───────────────────────────────────────────────────────────── */
+.queue__bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  overflow: hidden;
+}
+
+.queue__bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--grad-primary);
+  transition: width var(--t-fast);
+}
+
+.queue__item {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 04 — QUEUE EMPTY STATE
+   ───────────────────────────────────────────────────────────── */
+.queue__empty {
+  padding: var(--sp-5);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--txt-4);
+  font-style: italic;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — QUEUE SUMMARY
+   ───────────────────────────────────────────────────────────── */
+.queue__summary {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--txt-3);
+  margin-bottom: var(--sp-4);
+}
+
+.queue__summary span {
+  color: var(--accent);
+  font-weight: 600;
+}

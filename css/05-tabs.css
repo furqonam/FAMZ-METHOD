@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════════════════
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+   css/05-tabs.css
+   Tab switcher (iOS Segmented Control) + Tool sections
+   © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 01 — TABS CONTAINER (iOS Segmented Control)
+   ───────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  width: calc(100% - var(--sp-4) * 2);
+  max-width: 520px;
+  margin: 0 auto var(--sp-4);
+  padding: 4px;
+  background: var(--glass-1);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-pill);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 02 — TAB BUTTON
+   ───────────────────────────────────────────────────────────── */
+.tab {
+  flex: 1;
+  min-width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--txt-3);
+  transition: var(--t-base);
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab__icon {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform var(--t-base);
+}
+
+.tab__label {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.tab:active {
+  transform: scale(0.96);
+}
+
+.tab.is-active {
+  background: var(--grad-primary);
+  color: #ffffff;
+  box-shadow: var(--sh-1), 0 0 16px var(--accent-glow);
+}
+
+.tab.is-active .tab__icon {
+  transform: scale(1.1);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — TOOL SECTIONS (Panel)
+   ───────────────────────────────────────────────────────────── */
+.tool {
+  display: none;
+}
+
+.tool.is-active {
+  display: block;
+  animation: fade-in var(--t-base);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 04 — SETTINGS BLOCK (Encoder)
+   ───────────────────────────────────────────────────────────── */
+.settings {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-4);
+  background: var(--glass-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+}
+
+.settings .field-label:first-child {
+  margin-top: 0;
+}
+
+.settings .field {
+  margin-bottom: var(--sp-2);
+}
+
+.settings .field:last-child {
+  margin-bottom: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — RESPONSIVE
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .tabs {
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .tab {
+    min-width: 60px;
+    padding: var(--sp-2);
+  }
+
+  .tab__icon {
+    font-size: 14px;
+  }
+
+  .tab__label {
+    font-size: 9px;
+  }
+}

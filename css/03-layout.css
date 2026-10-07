@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════════════════════════════
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+   css/03-layout.css
+   Layout: Shell, Topbar, Hero, Footer
+   © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 01 — SHELL (Container)
+   ───────────────────────────────────────────────────────────── */
+.shell {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 var(--sp-4);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 02 — TOPBAR
+   ───────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  margin: 12px var(--sp-3) 0;
+  margin-top: max(12px, env(safe-area-inset-top));
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4);
+  transition: var(--t-base);
+}
+
+.topbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+/* 02.1 — BRAND */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.brand__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 12px var(--success);
+  flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.brand__text {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--txt-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 02.2 — BADGE */
+.badge {
+  padding: 4px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(10, 132, 255, 0.25);
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — HERO
+   ───────────────────────────────────────────────────────────── */
+.hero {
+  padding: var(--sp-8) 0 var(--sp-6);
+  text-align: center;
+}
+
+.hero__chip {
+  display: inline-block;
+  padding: 5px 14px;
+  margin-bottom: var(--sp-4);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(10, 132, 255, 0.2);
+  border-radius: var(--r-pill);
+}
+
+.hero__title {
+  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  margin-bottom: var(--sp-4);
+  color: var(--txt-1);
+}
+
+.hero__gradient {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.hero__sub {
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--txt-2);
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 04 — MAIN
+   ───────────────────────────────────────────────────────────── */
+main {
+  padding-bottom: var(--sp-6);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — FOOTER
+   ───────────────────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4) calc(var(--sp-6) + env(safe-area-inset-bottom));
+  margin-top: var(--sp-7);
+}
+
+.footer__brand {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--txt-2);
+  margin-bottom: var(--sp-2);
+}
+
+.footer__version {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: var(--sp-3);
+}
+
+.footer__copy {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--txt-4);
+  letter-spacing: 0.5px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 06 — RESPONSIVE
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .shell {
+    padding: 0 var(--sp-3);
+  }
+
+  .topbar {
+    margin-left: var(--sp-2);
+    margin-right: var(--sp-2);
+  }
+
+  .hero__title {
+    letter-spacing: -1px;
+  }
+}

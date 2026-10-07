@@ -1,0 +1,255 @@
+/* ═══════════════════════════════════════════════════════════════
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+   css/02-theme.css
+   AMOLED Black + Liquid Glass (iOS style) Design System
+   © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 01 — DESIGN TOKENS
+   ───────────────────────────────────────────────────────────── */
+:root {
+
+  /* 01.1 — AMOLED BACKGROUNDS */
+  --bg-0: #000000;                       /* Pure black */
+  --bg-1: #08080c;                       /* Near black */
+  --bg-2: #101016;                       /* Card base */
+  --bg-3: #18181f;                       /* Elevated */
+
+  /* 01.2 — LIQUID GLASS SURFACES */
+  --glass-1: rgba(255, 255, 255, 0.035);
+  --glass-2: rgba(255, 255, 255, 0.055);
+  --glass-3: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.10);
+
+  /* 01.3 — LIQUID GLASS BORDERS */
+  --line-1: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.10);
+  --line-3: rgba(255, 255, 255, 0.15);
+
+  /* 01.4 — TEXT HIERARCHY */
+  --txt-1: #ffffff;
+  --txt-2: rgba(255, 255, 255, 0.72);
+  --txt-3: rgba(255, 255, 255, 0.48);
+  --txt-4: rgba(255, 255, 255, 0.28);
+
+  /* 01.5 — iOS ACCENT PALETTE */
+  --blue: #0a84ff;
+  --indigo: #5e5ce6;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --red: #ff453a;
+  --orange: #ff9f0a;
+  --yellow: #ffd60a;
+  --green: #30d158;
+  --teal: #64d2ff;
+
+  /* 01.6 — SEMANTIC COLORS */
+  --accent: var(--blue);
+  --accent-glow: rgba(10, 132, 255, 0.35);
+  --accent-dim: rgba(10, 132, 255, 0.12);
+
+  --success: var(--green);
+  --danger: var(--red);
+  --warning: var(--orange);
+
+  /* 01.7 — GRADIENTS */
+  --grad-primary: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+  --grad-text: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 60%, #bf5af2 100%);
+  --grad-shine: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+
+  /* 01.8 — BLUR (Liquid Glass) */
+  --blur-xs: blur(8px) saturate(180%);
+  --blur-sm: blur(16px) saturate(180%);
+  --blur-md: blur(28px) saturate(180%);
+  --blur-lg: blur(40px) saturate(200%);
+  --blur-xl: blur(60px) saturate(200%);
+
+  /* 01.9 — RADIUS */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 26px;
+  --r-xl: 32px;
+  --r-2xl: 40px;
+  --r-pill: 999px;
+
+  /* 01.10 — SHADOWS */
+  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --sh-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --sh-3: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --sh-4: 0 24px 72px rgba(0, 0, 0, 0.6);
+  --sh-inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --sh-inset-bottom: inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  --sh-glow: 0 0 32px var(--accent-glow);
+  --sh-glow-lg: 0 0 64px var(--accent-glow);
+
+  /* 01.11 — SPACING */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+
+  /* 01.12 — TYPOGRAPHY */
+  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Fira Code', 'SF Mono', ui-monospace, 'Roboto Mono', monospace;
+
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+  --fs-3xl: 42px;
+
+  /* 01.13 — TRANSITIONS */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 150ms var(--ease);
+  --t-base: 250ms var(--ease);
+  --t-slow: 400ms var(--ease);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 02 — BASE BODY
+   ───────────────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  background: var(--bg-0);
+  color: var(--txt-1);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 03 — AMBIENT BACKGROUND (Orbs)
+   ───────────────────────────────────────────────────────────── */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-0);
+}
+
+.ambient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(10, 132, 255, 0.06), transparent 60%);
+}
+
+.ambient__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  will-change: transform;
+}
+
+.ambient__orb--a {
+  width: 380px;
+  height: 380px;
+  background: #0a84ff;
+  top: -140px;
+  left: -100px;
+  opacity: 0.32;
+  animation: float-a 22s ease-in-out infinite;
+}
+
+.ambient__orb--b {
+  width: 320px;
+  height: 320px;
+  background: #5e5ce6;
+  top: 35%;
+  right: -120px;
+  opacity: 0.28;
+  animation: float-b 26s ease-in-out infinite;
+}
+
+.ambient__orb--c {
+  width: 300px;
+  height: 300px;
+  background: #bf5af2;
+  bottom: -140px;
+  left: 25%;
+  opacity: 0.18;
+  animation: float-c 30s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 04 — ANIMATIONS
+   ───────────────────────────────────────────────────────────── */
+@keyframes float-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(40px, -60px) scale(1.08); }
+}
+
+@keyframes float-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-50px, 40px) scale(0.94); }
+}
+
+@keyframes float-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(30px, -30px) scale(1.05); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — GLASS UTILITY CLASSES
+   ───────────────────────────────────────────────────────────── */
+.glass {
+  background: var(--glass-2);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--sh-2), var(--sh-inset-top);
+}
+
+.glass--strong {
+  background: var(--glass-3);
+  backdrop-filter: var(--blur-lg);
+  -webkit-backdrop-filter: var(--blur-lg);
+  border: 1px solid var(--line-3);
+  box-shadow: var(--sh-3), var(--sh-inset-top);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 06 — TEXT UTILITY
+   ───────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
