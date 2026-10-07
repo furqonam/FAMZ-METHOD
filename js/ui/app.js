@@ -229,9 +229,10 @@ async function initApp() {
   // 3. Init all tools
   initAllTools();
 
-  // 4. Update UI badges
-  updateQuotaBadges();
-  initAppBadge();
+// 4. Update UI badges
+updateQuotaBadges();
+initAppBadge();
+updateTierBadge(); 
 
   // 5. Register service worker (PWA)
   registerServiceWorker();
@@ -240,14 +241,15 @@ async function initApp() {
   initVisibilityHandler();
   initErrorBoundary();
 
-  // 7. Welcome toast
-  setTimeout(function () {
-    const session = typeof sessionGet === 'function' ? sessionGet() : null;
-    if (session && session.connected) {
-      const tier = session.tier || 'free';
-      showToast('Welcome back — ' + tier.toUpperCase(), 'success');
-    }
-  }, 800);
+// 7. Welcome toast
+setTimeout(function () {
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+  if (session && session.connected) {
+    const tier = session.tier || 'free';
+    showToast('Welcome back — ' + tier.toUpperCase(), 'success');
+  }
+  updateTierBadge();
+}, 800);
 
   // 8. Detect encoder mode (async, background)
   if (typeof detectEncoderSupport === 'function') {
