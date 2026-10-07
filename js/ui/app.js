@@ -97,12 +97,10 @@ function handleTierClick() {
   const session = typeof sessionGet === 'function' ? sessionGet() : null;
 
   if (session && session.connected) {
-    // Udah login → buka Account Modal
     if (typeof openAccountModal === 'function') {
       openAccountModal();
     }
   } else {
-    // Belum login → buka gate
     openGate();
   }
 }
@@ -291,11 +289,9 @@ async function initApp() {
   const hasSavedSession = localStorage.getItem('famz_session');
 
   if (!session || !session.connected) {
-    // Kalo gak ada saved session → gate wajib
     if (!hasSavedSession) {
       openGate();
     } else {
-      // Ada saved tapi belum connect → verify dulu
       try {
         const saved = JSON.parse(hasSavedSession);
         if (saved && saved.username) {
@@ -338,7 +334,7 @@ async function initApp() {
   initVisibilityHandler();
   initErrorBoundary();
 
-  // 9. Welcome toast (kalo udah login)
+  // 9. Welcome toast
   setTimeout(function () {
     const s = typeof sessionGet === 'function' ? sessionGet() : null;
     if (s && s.connected) {
