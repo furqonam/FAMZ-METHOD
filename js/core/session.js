@@ -302,13 +302,18 @@ function autoResetQuota() {
 
   try {
     last = localStorage.getItem(SESSION_CONFIG.resetKey);
-  } catch (e) {}
+  } catch (e) {
+    console.warn('[FAMZ] Read reset key failed:', e);
+  }
 
   if (last !== today) {
     try {
       localStorage.removeItem(SESSION_CONFIG.usageKey);
       localStorage.setItem(SESSION_CONFIG.resetKey, today);
-    } catch (e) {}
+      console.log('[FAMZ] Quota reset for', today);
+    } catch (e) {
+      console.warn('[FAMZ] Quota reset failed:', e);
+    }
   }
 }
 
@@ -316,16 +321,11 @@ function autoResetQuota() {
    SECTION 12 — HMAC SIGNATURE (Security)
    ───────────────────────────────────────────────────────────── */
 function buildHeaders() {
-  const headers = {
-    'Accept': 'application/json',
+  // Simple headers — Worker gak validasi signature
+  // Jadi gak perlu kirim header custom (hindari CORS issue)
+  return {
+    'Accept': 'application/json'
   };
-
-  const ts = Date.now();
-  const rand = Math.random().toString(36).slice(2, 10);
-  const sig = btoa(ts + ':' + rand).slice(0, 24);
-
-  headers[SESSION_CONFIG.hmacHeader] = sig;
-  return headers;
 }
 
 /* ─────────────────────────────────────────────────────────────
