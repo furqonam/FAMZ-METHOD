@@ -677,20 +677,39 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 20px;
-  font-size: 13px;
 }
 
-.footer__socials a {
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-pill);
   color: var(--txt-2);
+  font-size: 12px;
+  font-weight: 600;
   transition: var(--t-fast);
+  text-decoration: none;
 }
 
-.footer__socials a:hover {
+.social-link:active {
+  transform: scale(0.96);
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
   color: var(--accent);
 }
 
-.footer__socials span {
-  color: var(--txt-4);
+.social-link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.social-link span {
+  white-space: nowrap;
 }
