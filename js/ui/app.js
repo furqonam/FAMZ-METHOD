@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/app.js
-   App Orchestration + Login Modal + Tier Badge
+   App Orchestration + Login Modal + Tier Badge + Account
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -26,15 +26,12 @@ function handleTierClick() {
   const session = typeof sessionGet === 'function' ? sessionGet() : null;
 
   if (session && session.connected) {
-    // Udah login → confirm logout
-    if (confirm('Logout dari akun ini?')) {
-      if (typeof sessionLogout === 'function') sessionLogout();
-      updateTierBadge();
-      showToast('Logout berhasil', 'success');
-      setTimeout(function () { location.reload(); }, 800);
+    // Udah login → buka Account Modal
+    if (typeof openAccountModal === 'function') {
+      openAccountModal();
     }
   } else {
-    // Belum login → buka modal
+    // Belum login → buka Login Modal
     openLoginModal();
   }
 }
@@ -45,7 +42,6 @@ function openLoginModal() {
 
   modal.classList.add('is-show');
 
-  // Focus ke input
   setTimeout(function () {
     const input = document.getElementById('login_input');
     if (input) input.focus();
@@ -57,7 +53,6 @@ function closeLoginModal() {
   if (!modal) return;
   modal.classList.remove('is-show');
 
-  // Clear input
   const input = document.getElementById('login_input');
   if (input) input.value = '';
 }
@@ -86,7 +81,6 @@ async function doLogin() {
     const session = sessionGet();
     showToast('Login berhasil — ' + session.tier.toUpperCase(), 'success');
 
-    // Reload biar UI refresh
     setTimeout(function () { location.reload(); }, 1000);
 
   } catch (err) {
@@ -292,6 +286,13 @@ async function initApp() {
   updateQuotaBadges();
   initAppBadge();
   updateTierBadge();
+
+  // 4.1 Load account
+  try {
+    if (typeof loadAccount === 'function') loadAccount();
+  } catch (e) {
+    console.warn('[init] account failed', e);
+  }
 
   // 5. PWA
   registerServiceWorker();
