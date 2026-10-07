@@ -110,8 +110,7 @@ function patchMP4(buffer, opts) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — MVHD REBUILD (TIRU REYYTOOLS V1)
-   Convert ke version 1 (64-bit) + spoof duration
+   SECTION 03 — MVHD REBUILD + SPOOF DURATION
    ───────────────────────────────────────────────────────────── */
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
