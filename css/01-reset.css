@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/01-reset.css
-   Reset + Normalize + Base + GPU Optimization
+   Reset + Normalize + Base
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -21,10 +21,10 @@
    SECTION 02 — HTML
    ───────────────────────────────────────────────────────────── */
 html {
+  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -35,6 +35,9 @@ body {
   min-height: 100dvh;
   line-height: 1.55;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -125,10 +128,19 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 3px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 /* ─────────────────────────────────────────────────────────────
    SECTION 11 — SELECTION
    ───────────────────────────────────────────────────────────── */
 ::selection {
+  background: rgba(10, 132, 255, 0.35);
+  color: #ffffff;
+}
+
+::-moz-selection {
   background: rgba(10, 132, 255, 0.35);
   color: #ffffff;
 }
@@ -163,22 +175,4 @@ h1, h2, h3, h4, h5, h6 {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 15 — GPU ACCELERATION
-   ───────────────────────────────────────────────────────────── */
-.tab,
-.btn,
-.card,
-.drop,
-.topbar,
-.tabs,
-.footer__btn,
-.support-btn,
-.social-link,
-.tier-badge {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
