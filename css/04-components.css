@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/04-components.css
-   Card, Button, Drop, Progress, Status, Report, Preview, Toast
+   Card, Button, Drop, Progress, Status, Report, Preview, Toast, Modal
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -35,7 +35,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 02 — FIELD (Input / Select)
+   SECTION 02 — FIELD
    ───────────────────────────────────────────────────────────── */
 .field-label {
   display: block;
@@ -511,8 +511,13 @@ select.field option {
   color: var(--success);
 }
 
+.toast.is-warning {
+  border-color: rgba(255, 159, 10, 0.4);
+  color: var(--warning);
+}
+
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MODAL (Quota)
+   SECTION 12 — MODAL (Quota + Login + Account)
    ───────────────────────────────────────────────────────────── */
 .modal {
   position: fixed;
@@ -527,7 +532,10 @@ select.field option {
   transition: opacity var(--t-base);
 }
 
-.modal.is-show { opacity: 1; pointer-events: auto; }
+.modal.is-show {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .modal__backdrop {
   position: absolute;
@@ -541,17 +549,40 @@ select.field option {
   position: relative;
   width: 100%;
   max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: var(--sp-6);
   border-radius: var(--r-xl);
   text-align: center;
   animation: pop-in var(--t-base);
 }
 
-.modal__icon { font-size: 48px; margin-bottom: var(--sp-3); }
-.modal__title { font-size: var(--fs-lg); font-weight: 800; margin-bottom: var(--sp-2); }
-.modal__text { font-size: var(--fs-sm); color: var(--txt-2); margin-bottom: var(--sp-5); line-height: 1.6; }
-.modal__actions { display: flex; gap: var(--sp-2); }
-.modal__actions .btn { flex: 1; }
+.modal__icon {
+  font-size: 48px;
+  margin-bottom: var(--sp-3);
+}
+
+.modal__title {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  margin-bottom: var(--sp-2);
+}
+
+.modal__text {
+  font-size: var(--fs-sm);
+  color: var(--txt-2);
+  margin-bottom: var(--sp-5);
+  line-height: 1.6;
+}
+
+.modal__actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.modal__actions .btn {
+  flex: 1;
+}
 
 .btn--ghost {
   color: var(--txt-2);
@@ -564,7 +595,85 @@ select.field option {
   transform: scale(0.97);
 }
 
-.toast.is-warning {
-  border-color: rgba(255, 159, 10, 0.4);
-  color: var(--warning);
+/* ─────────────────────────────────────────────────────────────
+   SECTION 13 — ACCOUNT MODAL
+   ───────────────────────────────────────────────────────────── */
+.account__avatar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-4);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-1);
+  text-align: left;
 }
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-dim);
+  border: 2px solid rgba(10, 132, 255, 0.3);
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: var(--t-fast);
+}
+
+.avatar:active {
+  transform: scale(0.95);
+  border-color: var(--accent);
+}
+
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  border-radius: 50%;
+}
+
+.account__who {
+  flex: 1;
+  min-width: 0;
+}
+
+.who {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--txt-1);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.who-sub {
+  font-size: 11px;
+  color: var(--txt-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 14 — ANIMATIONS (Local)
+   ───────────────────────────────────────────────────────────── */
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+     }
