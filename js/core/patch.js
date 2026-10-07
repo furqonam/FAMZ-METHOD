@@ -1,7 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/core/patch.js
-   Patch Engine — rebuild MP4 + spoof resolution + validation
+   
+   Patch Engine —  rebuild MP4 + spoof resolution + spoof bitrate +
+                                       spoof duration + multi-mode (Patch/Boost60/Speed) +
+                                       validation
+   
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -40,20 +44,35 @@ function patchMP4(buffer, opts) {
 
   const repl = new Map();
 
-  /* STEP A: Spoof mvhd (convert ke version 1 + spoof duration) */
+  const mode = opts.mode || 'patch';
+  const speedScale = parseInt(opts.speedScale, 10) || 2;
+
+  /* STEP A: Spoof mvhd */
   const mvhd = pickChild(moov, 'mvhd');
   if (mvhd) {
     repl.set(mvhd, rebuildMvhd(arr, dv, mvhd));
   }
 
-  /* STEP B: Spoof resolution + bitrate (H.264 + HEVC) */
+  /* STEP B: Boost60 */
+  if (mode === 'boost60') {
+    const boostMap = spoofFrameRate(arr, dv, moov, 60);
+    boostMap.forEach(function (v, k) { repl.set(k, v); });
+  }
+
+  /* STEP C: Speed */
+  if (mode === 'speed') {
+    const speedMap = spoofTimescale(arr, dv, moov, speedScale);
+    speedMap.forEach(function (v, k) { repl.set(k, v); });
+  }
+
+  /* STEP D: Spoof resolution + bitrate */
   const platform = opts.platform || 'tiktok';
   const target = PLATFORM_TARGETS[platform] || PLATFORM_TARGETS.tiktok;
   const spoofMap = spoofResolutionAndBitrate(arr, dv, moov, target);
-  spoofMap.forEach(function(v, k) { repl.set(k, v); });
+  spoofMap.forEach(function (v, k) { repl.set(k, v); });
 
-  /* STEP C: Signature udta (replace, anti double-stack) */
-  const sigUdta = buildSignatureUdta();
+  /* STEP E: Signature udta */
+  const sigUdta = buildSignatureUdta(mode);
   const existingUdta = pickChild(moov, 'udta');
   if (existingUdta) {
     repl.set(existingUdta, mergeUdta(arr, existingUdta, sigUdta));
@@ -61,7 +80,7 @@ function patchMP4(buffer, opts) {
     repl.set('__appendUdta__', sigUdta);
   }
 
-  /* STEP D: Collect stco */
+  /* STEP F: Collect stco */
   const stcos = [];
   for (let i = 0; i < moov.children.length; i++) {
     const trak = moov.children[i];
@@ -72,19 +91,19 @@ function patchMP4(buffer, opts) {
     if (stco) stcos.push(stco);
   }
 
-  /* STEP E: Pass 1 — rebuild with delta 0 */
+  /* STEP G: Pass 1 — delta 0 */
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), 0));
   }
   const ftypBytes = ftyp ? sliceAtomRaw(ftyp) : new Uint8Array(0);
   const moov1 = rebuildTree(moov, repl);
 
-  /* STEP F: Calculate delta */
+  /* STEP H: Delta */
   const newMdatStart = ftypBytes.length + moov1.length;
   const oldMdatStart = mdat.offset;
   const delta = newMdatStart - oldMdatStart;
 
-  /* STEP G: Pass 2 — rebuild with real delta */
+  /* STEP I: Pass 2 */
   repl.delete('__appendUdta__');
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), delta));
@@ -92,10 +111,10 @@ function patchMP4(buffer, opts) {
   const moovFinal = rebuildTree(moov, repl);
   const mdatFull = sliceAtomRaw(mdat);
 
-  /* STEP H: Merge output (faststart order) */
+  /* STEP J: Merge */
   const output = mergeBytes([ftypBytes, moovFinal, mdatFull]);
 
-  /* STEP I: Validate */
+  /* STEP K: Validate */
   const validation = validatePatch(output);
 
   const elapsed = (performance.now() - t0) / 1000;
@@ -105,17 +124,17 @@ function patchMP4(buffer, opts) {
     before: before,
     after: output.length,
     validation: validation,
-    elapsed: elapsed
+    elapsed: elapsed,
+    mode: mode
   };
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — MVHD REBUILD + SPOOF DURATION
+   SECTION 03 — MVHD REBUILD (spoof duration)
    ───────────────────────────────────────────────────────────── */
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
 
-  // Kalau udah version 1, cuma spoof duration 64-bit
   if (version === 1) {
     const out = sliceAtomRaw(atom).slice();
     const odv = new DataView(out.buffer, out.byteOffset);
@@ -124,7 +143,6 @@ function rebuildMvhd(arr, dv, atom) {
     return out;
   }
 
-  // Version 0 → convert ke version 1 + spoof duration
   const ct      = dv.getUint32(atom.contentStart + 4, false);
   const mt      = dv.getUint32(atom.contentStart + 8, false);
   const ts      = dv.getUint32(atom.contentStart + 12, false);
@@ -134,25 +152,103 @@ function rebuildMvhd(arr, dv, atom) {
 
   const out = new Uint8Array(newSize);
   const odv = new DataView(out.buffer);
-
   odv.setUint32(0, newSize, false);
   writeType(out, 4, 'mvhd');
 
-  out[8] = 1;                              // version → 1
-  odv.setUint32(12, 0, false);             // creation_time high
-  odv.setUint32(16, ct, false);            // creation_time low
-  odv.setUint32(20, 0, false);             // modification_time high
-  odv.setUint32(24, mt, false);            // modification_time low
-  odv.setUint32(28, ts, false);            // timescale (asli)
-  odv.setUint32(32, 0xFFFFFFFF, false);    // duration high (TRICK)
-  odv.setUint32(36, 0xFFFFFFFF, false);    // duration low (TRICK)
+  out[8] = 1;
+  odv.setUint32(12, 0, false);
+  odv.setUint32(16, ct, false);
+  odv.setUint32(20, 0, false);
+  odv.setUint32(24, mt, false);
+  odv.setUint32(28, ts, false);
+  odv.setUint32(32, 0xFFFFFFFF, false);
+  odv.setUint32(36, 0xFFFFFFFF, false);
 
   out.set(arr.slice(restSrc, restSrc + restLen), 40);
   return out;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — SPOOF RESOLUTION + BITRATE (H.264 + HEVC)
+   SECTION 04 — SPOOF FRAME RATE (BOOST60)
+   ───────────────────────────────────────────────────────────── */
+function spoofFrameRate(arr, dv, moov, targetFps) {
+  const repl = new Map();
+
+  for (let i = 0; i < moov.children.length; i++) {
+    const trak = moov.children[i];
+    if (trak.type !== 'trak') continue;
+
+    const mdia = pickChild(trak, 'mdia');
+    if (!mdia) continue;
+
+    const mdhd = pickChild(mdia, 'mdhd');
+    if (!mdhd) continue;
+
+    const version = arr[mdhd.contentStart];
+
+    if (version === 0) {
+      const out = sliceAtomRaw(mdhd).slice();
+      const odv = new DataView(out.buffer, out.byteOffset);
+      const oldTimescale = dv.getUint32(mdhd.offset + 20, false);
+
+      if (oldTimescale > 0 && oldTimescale < targetFps * 100) {
+        odv.setUint32(20, targetFps * 1000, false);
+      }
+      repl.set(mdhd, out);
+    } else {
+      const out = sliceAtomRaw(mdhd).slice();
+      const odv = new DataView(out.buffer, out.byteOffset);
+      const oldTimescale = dv.getUint32(mdhd.offset + 28, false);
+
+      if (oldTimescale > 0 && oldTimescale < targetFps * 100) {
+        odv.setUint32(28, targetFps * 1000, false);
+      }
+      repl.set(mdhd, out);
+    }
+  }
+
+  return repl;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — SPOOF TIMESCALE (SPEED)
+   ───────────────────────────────────────────────────────────── */
+function spoofTimescale(arr, dv, moov, scale) {
+  const repl = new Map();
+  const s = Math.max(1, Math.min(10, scale));
+
+  for (let i = 0; i < moov.children.length; i++) {
+    const trak = moov.children[i];
+    if (trak.type !== 'trak') continue;
+
+    const mdia = pickChild(trak, 'mdia');
+    if (!mdia) continue;
+
+    const mdhd = pickChild(mdia, 'mdhd');
+    if (!mdhd) continue;
+
+    const version = arr[mdhd.contentStart];
+
+    if (version === 0) {
+      const out = sliceAtomRaw(mdhd).slice();
+      const odv = new DataView(out.buffer, out.byteOffset);
+      const oldTimescale = dv.getUint32(mdhd.offset + 20, false);
+      odv.setUint32(20, oldTimescale * s, false);
+      repl.set(mdhd, out);
+    } else {
+      const out = sliceAtomRaw(mdhd).slice();
+      const odv = new DataView(out.buffer, out.byteOffset);
+      const oldTimescale = dv.getUint32(mdhd.offset + 28, false);
+      odv.setUint32(28, oldTimescale * s, false);
+      repl.set(mdhd, out);
+    }
+  }
+
+  return repl;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 06 — SPOOF RESOLUTION + BITRATE
    ───────────────────────────────────────────────────────────── */
 function spoofResolutionAndBitrate(arr, dv, moov, target) {
   const repl = new Map();
@@ -208,7 +304,7 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — FIND CHILD IN BYTES
+   SECTION 07 — FIND CHILD IN BYTES
    ───────────────────────────────────────────────────────────── */
 function findChildInBytes(bytes, type) {
   let off = 8;
@@ -224,7 +320,7 @@ function findChildInBytes(bytes, type) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — REBUILD STSD
+   SECTION 08 — REBUILD STSD
    ───────────────────────────────────────────────────────────── */
 function rebuildStsdWithEntry(arr, stsd, newEntry) {
   const header = arr.slice(stsd.contentStart, stsd.contentStart + 8);
@@ -232,7 +328,7 @@ function rebuildStsdWithEntry(arr, stsd, newEntry) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — REBUILD STCO
+   SECTION 09 — REBUILD STCO
    ───────────────────────────────────────────────────────────── */
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(8 + offsets.length * 4);
@@ -246,7 +342,7 @@ function rebuildStco(offsets, delta) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — REBUILD TREE
+   SECTION 10 — REBUILD TREE
    ───────────────────────────────────────────────────────────── */
 function rebuildTree(atom, repl) {
   if (repl.has(atom)) return repl.get(atom);
@@ -269,18 +365,21 @@ function rebuildTree(atom, repl) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — SIGNATURE UDTA
+   SECTION 11 — SIGNATURE UDTA
    ───────────────────────────────────────────────────────────── */
-function buildSignatureUdta() {
+function buildSignatureUdta(mode) {
   const today = new Date().toISOString().slice(0, 10);
+  const modeLabel = mode === 'boost60' ? 'FAMZ Boost60' :
+                    mode === 'speed'   ? 'FAMZ Speed' :
+                                          'FAMZ METHOD';
 
   const tags = [
-    buildTag('\u00A9nam', 'FAMZ METHOD'),
+    buildTag('\u00A9nam', modeLabel),
     buildTag('\u00A9cpy', '\u00A9 2026 FAMZ // vurkonnn'),
     buildTag('\u00A9too', 'FAMZ Engine'),
     buildTag('\u00A9swr', 'FAMZ METHOD v1.0'),
     buildTag('\u00A9prd', 'vurkonnn'),
-    buildTag('\u00A9des', 'Optimized by FAMZ METHOD'),
+    buildTag('\u00A9des', 'Optimized by ' + modeLabel),
     buildTag('\u00A9cmt', 't.me/famz_bot'),
     buildTag('\u00A9day', today)
   ];
@@ -292,7 +391,7 @@ function buildSignatureUdta() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — BUILD TAG ATOM
+   SECTION 12 — BUILD TAG
    ───────────────────────────────────────────────────────────── */
 function buildTag(fourCC, text) {
   const tb = new TextEncoder().encode(text);
@@ -307,7 +406,7 @@ function buildTag(fourCC, text) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 11 — BUILD HDLR ATOM
+   SECTION 13 — BUILD HDLR
    ───────────────────────────────────────────────────────────── */
 function buildHdlr() {
   const body = new Uint8Array(25);
@@ -323,14 +422,14 @@ function buildHdlr() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MERGE UDTA (REPLACE — anti double-stack)
+   SECTION 14 — MERGE UDTA (REPLACE)
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
   return sigUdta;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 13 — VALIDATION
+   SECTION 15 — VALIDATION
    ───────────────────────────────────────────────────────────── */
 function validatePatch(output) {
   try {
@@ -378,6 +477,6 @@ function validatePatch(output) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 14 — EXPORT
+   SECTION 16 — EXPORT
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] patch.js loaded');
