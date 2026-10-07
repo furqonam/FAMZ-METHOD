@@ -44,9 +44,7 @@
     <div class="ambient__orb ambient__orb--c"></div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       LOGIN GATE (fullscreen)
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- LOGIN GATE -->
   <div id="gate" class="gate" hidden>
     <div class="gate__box glass">
       <div class="gate__logo">
@@ -153,6 +151,32 @@
 
         <div class="preview" id="patch_preview" hidden>
           <video id="patch_video" playsinline muted loop></video>
+        </div>
+
+        <!-- MODE SELECTOR -->
+        <label class="field-label">Mode</label>
+        <div class="modes">
+          <button class="mode is-active" data-mode="patch" onclick="pickPatchMode('patch')">
+            <span class="mode__icon">◆</span>
+            <span class="mode__text">
+              <b>Patch</b>
+              <i>Standard patch — rebuild + spoof</i>
+            </span>
+          </button>
+          <button class="mode" data-mode="boost60" onclick="pickPatchMode('boost60')">
+            <span class="mode__icon">⚡</span>
+            <span class="mode__text">
+              <b>Boost 60 FPS</b>
+              <i>Frame rate hint — smooth playback</i>
+            </span>
+          </button>
+          <button class="mode" data-mode="speed" onclick="pickPatchMode('speed')">
+            <span class="mode__icon">⏩</span>
+            <span class="mode__text">
+              <b>Speed Tune</b>
+              <i>Timing optimization — faster video</i>
+            </span>
+          </button>
         </div>
 
         <div class="status" id="patch_status">
@@ -365,9 +389,7 @@
     <p class="footer__copy">© 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣</p>
   </footer>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       ACCOUNT MODAL
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- ACCOUNT MODAL -->
   <div class="modal" id="account_modal">
     <div class="modal__backdrop" onclick="closeAccountModal()"></div>
     <div class="modal__box glass">
