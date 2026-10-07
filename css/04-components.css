@@ -1,8 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/04-components.css
-   Card, Button, Drop, Progress, Status, Report, Preview, Toast,
-   Modal, Account, Gate, Support
+   Components — MAX PERFORMANCE (no blur, no shadow, no animation)
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -10,9 +9,11 @@
    SECTION 01 — CARD
    ───────────────────────────────────────────────────────────── */
 .card {
-  border-radius: var(--r-xl);
+  border-radius: var(--r-lg);
   padding: var(--sp-5);
   margin-bottom: var(--sp-4);
+  background: rgba(15, 18, 25, 0.92);
+  border: 1px solid var(--line-2);
 }
 
 .card__head {
@@ -24,7 +25,6 @@
 .card__title {
   font-size: var(--fs-lg);
   font-weight: 800;
-  letter-spacing: -0.5px;
   margin-bottom: var(--sp-1);
   color: var(--txt-1);
 }
@@ -52,22 +52,22 @@
 .field {
   width: 100%;
   padding: var(--sp-3) var(--sp-4);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   color: var(--txt-1);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
   outline: none;
-  transition: var(--t-fast);
 }
 
 .field:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-.field::placeholder { color: var(--txt-4); }
+.field::placeholder {
+  color: var(--txt-4);
+}
 
 select.field {
   appearance: none;
@@ -79,7 +79,10 @@ select.field {
   padding-right: 36px;
 }
 
-select.field option { background: var(--bg-3); color: var(--txt-1); }
+select.field option {
+  background: var(--bg-3);
+  color: var(--txt-1);
+}
 
 .hint {
   font-size: 11px;
@@ -102,13 +105,11 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   border: 1.5px dashed rgba(10, 132, 255, 0.3);
   border-radius: var(--r-lg);
   background: rgba(10, 132, 255, 0.03);
-  transition: var(--t-base);
   cursor: pointer;
   text-align: center;
 }
 
 .drop:active {
-  transform: scale(0.98);
   border-color: var(--accent);
   background: rgba(10, 132, 255, 0.08);
 }
@@ -118,11 +119,18 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   color: var(--accent);
   line-height: 1;
   margin-bottom: var(--sp-2);
-  filter: drop-shadow(0 0 12px var(--accent-glow));
 }
 
-.drop__title { font-size: var(--fs-base); font-weight: 700; color: var(--txt-1); }
-.drop__sub { font-size: var(--fs-xs); color: var(--txt-3); }
+.drop__title {
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--txt-1);
+}
+
+.drop__sub {
+  font-size: var(--fs-xs);
+  color: var(--txt-3);
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 04 — FILE TAG
@@ -134,7 +142,7 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   margin-bottom: var(--sp-4);
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   font-family: var(--font-mono);
@@ -150,12 +158,17 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   min-width: 0;
 }
 
-.filetag__size { color: var(--accent); font-weight: 600; flex-shrink: 0; }
+.filetag__size {
+  color: var(--accent);
+  font-weight: 600;
+  flex-shrink: 0;
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 05 — PREVIEW
    ───────────────────────────────────────────────────────────── */
 .preview {
+  position: relative;
   aspect-ratio: 9/16;
   max-height: 420px;
   margin: 0 auto var(--sp-4);
@@ -163,7 +176,6 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   overflow: hidden;
   background: #000;
   border: 1px solid var(--line-2);
-  box-shadow: var(--sh-2);
   max-width: 280px;
   width: 100%;
 }
@@ -176,15 +188,69 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   display: block;
 }
 
-.preview video::-webkit-media-controls-panel {
-  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+.preview__controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.85);
 }
 
-.preview--image { aspect-ratio: auto; max-height: 400px; }
-.preview--image img { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.preview__btn {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.preview__btn:active {
+  background: rgba(10, 132, 255, 0.4);
+}
+
+.preview__btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  display: block;
+}
+
+.preview__progress {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.preview__progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #0a84ff;
+  border-radius: var(--r-pill);
+}
+
+.preview__time {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — STATUS INDICATOR
+   SECTION 06 — STATUS
    ───────────────────────────────────────────────────────────── */
 .status {
   display: flex;
@@ -192,7 +258,7 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   margin-bottom: var(--sp-4);
-  background: var(--glass-1);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   font-size: var(--fs-sm);
@@ -205,27 +271,32 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   border-radius: 50%;
   background: var(--txt-4);
   flex-shrink: 0;
-  transition: var(--t-fast);
 }
 
 .status.is-working .status__dot {
   background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
-  animation: pulse-dot 1s ease-in-out infinite;
 }
 
-.status.is-success .status__dot { background: var(--success); box-shadow: 0 0 12px var(--success); }
-.status.is-error .status__dot { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+.status.is-success .status__dot {
+  background: var(--success);
+}
 
-.status__text { flex: 1; font-weight: 500; }
+.status.is-error .status__dot {
+  background: var(--danger);
+}
+
+.status__text {
+  flex: 1;
+  font-weight: 500;
+}
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — PROGRESS BAR
+   SECTION 07 — PROGRESS
    ───────────────────────────────────────────────────────────── */
 .progress {
   margin-bottom: var(--sp-4);
   padding: var(--sp-4);
-  background: var(--glass-1);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
 }
@@ -241,10 +312,8 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
 .progress__fill {
   height: 100%;
   width: 0%;
-  background: var(--grad-primary);
+  background: #0a84ff;
   border-radius: var(--r-pill);
-  transition: width var(--t-base);
-  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .progress__meta {
@@ -267,14 +336,34 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   line-height: 1.7;
 }
 
-.progress__log:empty { display: none; padding: 0; border: 0; margin: 0; }
-.progress__log > div { opacity: 0.6; }
-.progress__log > div:last-child { opacity: 1; color: var(--accent); }
-.progress__log > div.is-error { color: var(--danger); opacity: 1; }
-.progress__log > div.is-done { color: var(--success); opacity: 0.9; }
+.progress__log:empty {
+  display: none;
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+.progress__log > div {
+  opacity: 0.6;
+}
+
+.progress__log > div:last-child {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.progress__log > div.is-error {
+  color: var(--danger);
+  opacity: 1;
+}
+
+.progress__log > div.is-done {
+  color: var(--success);
+  opacity: 0.9;
+}
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — REPORT CARD
+   SECTION 08 — REPORT
    ───────────────────────────────────────────────────────────── */
 .report {
   margin-bottom: var(--sp-4);
@@ -282,7 +371,6 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   background: rgba(48, 209, 88, 0.06);
   border: 1px solid rgba(48, 209, 88, 0.2);
   border-radius: var(--r-sm);
-  animation: fade-in var(--t-base);
 }
 
 .report__row {
@@ -293,7 +381,10 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   font-size: var(--fs-xs);
 }
 
-.report__row span:first-child { color: var(--txt-3); }
+.report__row span:first-child {
+  color: var(--txt-3);
+}
+
 .report__row span:last-child {
   font-family: var(--font-mono);
   font-weight: 600;
@@ -301,15 +392,14 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — RESULT CARD
+   SECTION 09 — RESULT
    ───────────────────────────────────────────────────────────── */
 .result {
   margin-bottom: var(--sp-4);
   padding: var(--sp-5);
-  background: var(--glass-1);
+  background: rgba(15, 18, 25, 0.92);
   border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
-  animation: fade-in var(--t-base);
 }
 
 .result__badge {
@@ -319,13 +409,30 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   text-align: center;
 }
 
-.result__badge--ok { background: rgba(48, 209, 88, 0.08); border: 1px solid rgba(48, 209, 88, 0.25); }
-.result__badge--no { background: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.25); }
+.result__badge--ok {
+  background: rgba(48, 209, 88, 0.08);
+  border: 1px solid rgba(48, 209, 88, 0.25);
+}
 
-.result__badge b { display: block; font-size: var(--fs-base); margin-bottom: var(--sp-1); }
+.result__badge--no {
+  background: rgba(255, 69, 58, 0.08);
+  border: 1px solid rgba(255, 69, 58, 0.25);
+}
+
+.result__badge b {
+  display: block;
+  font-size: var(--fs-base);
+  margin-bottom: var(--sp-1);
+}
+
 .result__badge--ok b { color: var(--success); }
 .result__badge--no b { color: var(--danger); }
-.result__badge i { font-style: normal; font-size: var(--fs-xs); color: var(--txt-2); }
+
+.result__badge i {
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--txt-2);
+}
 
 .result__grid {
   display: grid;
@@ -335,7 +442,7 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
 
 .result__item {
   padding: var(--sp-3);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3);
   border-radius: var(--r-sm);
   border: 1px solid var(--line-1);
 }
@@ -368,33 +475,22 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   padding: var(--sp-4) var(--sp-5);
   font-size: var(--fs-base);
   font-weight: 700;
-  letter-spacing: 0.3px;
   border-radius: var(--r-pill);
-  transition: var(--t-base);
-  position: relative;
-  overflow: hidden;
+  border: none;
 }
 
 .btn--primary {
   color: #fff;
   background: var(--grad-primary);
-  box-shadow: var(--sh-2), 0 0 24px var(--accent-glow);
-}
-
-.btn--primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--grad-shine);
-  pointer-events: none;
 }
 
 .btn--primary:active:not(:disabled) {
-  transform: scale(0.97);
-  box-shadow: var(--sh-1), 0 0 16px var(--accent-glow);
+  opacity: 0.85;
 }
 
-.btn:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.5); }
+.btn:disabled {
+  opacity: 0.4;
+}
 
 .btn--ghost {
   color: var(--txt-2);
@@ -404,7 +500,6 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
 
 .btn--ghost:active {
   background: rgba(255, 255, 255, 0.08);
-  transform: scale(0.97);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -418,25 +513,39 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   z-index: 999;
   padding: var(--sp-3) var(--sp-5);
   max-width: calc(100vw - 32px);
-  background: rgba(20, 20, 28, 0.85);
+  background: rgba(20, 20, 28, 0.95);
   border: 1px solid var(--line-3);
   border-radius: var(--r-pill);
   color: var(--txt-1);
   font-size: var(--fs-sm);
   font-weight: 600;
-  box-shadow: var(--sh-3);
   opacity: 0;
   pointer-events: none;
-  transition: transform var(--t-base), opacity var(--t-base);
+  transition: transform 0.2s ease, opacity 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.toast.is-show { transform: translateX(-50%) translateY(0); opacity: 1; }
-.toast.is-error { border-color: rgba(255, 69, 58, 0.4); color: var(--danger); }
-.toast.is-success { border-color: rgba(48, 209, 88, 0.4); color: var(--success); }
-.toast.is-warning { border-color: rgba(255, 159, 10, 0.4); color: var(--warning); }
+.toast.is-show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast.is-error {
+  border-color: rgba(255, 69, 58, 0.4);
+  color: var(--danger);
+}
+
+.toast.is-success {
+  border-color: rgba(48, 209, 88, 0.4);
+  color: var(--success);
+}
+
+.toast.is-warning {
+  border-color: rgba(255, 159, 10, 0.4);
+  color: var(--warning);
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 12 — MODAL
@@ -451,10 +560,13 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   padding: var(--sp-4);
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--t-base);
+  transition: opacity 0.2s ease;
 }
 
-.modal.is-show { opacity: 1; pointer-events: auto; }
+.modal.is-show {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 .modal__backdrop {
   position: absolute;
@@ -471,17 +583,39 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   padding: var(--sp-6);
   border-radius: var(--r-xl);
   text-align: center;
-  animation: pop-in var(--t-base);
+  background: rgba(20, 24, 32, 0.95);
+  border: 1px solid var(--line-2);
 }
 
-.modal__icon { font-size: 48px; margin-bottom: var(--sp-3); }
-.modal__title { font-size: var(--fs-lg); font-weight: 800; margin-bottom: var(--sp-2); }
-.modal__text { font-size: var(--fs-sm); color: var(--txt-2); margin-bottom: var(--sp-5); line-height: 1.6; }
-.modal__actions { display: flex; gap: var(--sp-2); }
-.modal__actions .btn { flex: 1; }
+.modal__icon {
+  font-size: 48px;
+  margin-bottom: var(--sp-3);
+}
+
+.modal__title {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  margin-bottom: var(--sp-2);
+}
+
+.modal__text {
+  font-size: var(--fs-sm);
+  color: var(--txt-2);
+  margin-bottom: var(--sp-5);
+  line-height: 1.6;
+}
+
+.modal__actions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.modal__actions .btn {
+  flex: 1;
+}
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 13 — ACCOUNT MODAL
+   SECTION 13 — ACCOUNT
    ───────────────────────────────────────────────────────────── */
 .account__avatar-row {
   display: flex;
@@ -510,10 +644,7 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
-  transition: var(--t-fast);
 }
-
-.avatar:active { transform: scale(0.95); border-color: var(--accent); }
 
 .avatar img {
   position: absolute;
@@ -525,7 +656,10 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   border-radius: 50%;
 }
 
-.account__who { flex: 1; min-width: 0; }
+.account__who {
+  flex: 1;
+  min-width: 0;
+}
 
 .who {
   font-size: 1.1rem;
@@ -551,15 +685,16 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--bg-0);
+  background: #000000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: fade-in 0.3s ease;
 }
 
-.gate[hidden] { display: none; }
+.gate[hidden] {
+  display: none;
+}
 
 .gate__box {
   width: 100%;
@@ -567,7 +702,8 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   padding: 44px 32px;
   text-align: center;
   border-radius: var(--r-xl);
-  animation: pop-in 0.3s ease;
+  background: rgba(20, 24, 32, 0.95);
+  border: 1px solid var(--line-2);
 }
 
 .gate__logo {
@@ -586,7 +722,6 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   border-radius: var(--r-lg);
   font-size: 32px;
   font-weight: 800;
-  box-shadow: 0 0 32px var(--accent-glow);
 }
 
 .gate__title {
@@ -622,9 +757,9 @@ select.field option { background: var(--bg-3); color: var(--txt-1); }
   font-weight: 600;
 }
 
-.gate__foot a:hover { text-decoration: underline; }
-
-body:has(.gate:not([hidden])) { overflow: hidden; }
+body:has(.gate:not([hidden])) {
+  overflow: hidden;
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 15 — SUPPORT BUTTON
@@ -639,15 +774,12 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
   border-radius: 50%;
   color: #ff453a;
   cursor: pointer;
-  transition: var(--t-fast);
   flex-shrink: 0;
   padding: 0;
 }
 
 .support-btn:active {
-  transform: scale(0.92);
   background: rgba(255, 69, 58, 0.2);
-  box-shadow: 0 0 12px rgba(255, 69, 58, 0.4);
 }
 
 .support-btn svg {
@@ -681,3 +813,39 @@ body:has(.gate:not([hidden])) { overflow: hidden; }
   stroke-width: 2;
 }
 
+.footer__socials {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-pill);
+  color: var(--txt-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.social-link:active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.social-link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.social-link span {
+  white-space: nowrap;
+}
