@@ -318,7 +318,6 @@ function autoResetQuota() {
 function buildHeaders() {
   const headers = {
     'Accept': 'application/json',
-    'X-Famz-Client': 'web-v1.0'
   };
 
   const ts = Date.now();
