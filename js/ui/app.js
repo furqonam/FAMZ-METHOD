@@ -10,6 +10,7 @@
 /* ─────────────────────────────────────────────────────────────
    SECTION 01 — QUOTA MODAL
    ───────────────────────────────────────────────────────────── */
+
 /* Helper lokal — jangan depend ke queue-ui.js */
 function esc(text) {
   if (typeof escapeHtml === 'function') {
@@ -21,7 +22,6 @@ function esc(text) {
 }
 
 function showQuotaModal(message) {
-  // Hapus modal lama kalau ada
   const old = document.getElementById('famz_quota_modal');
   if (old) old.remove();
 
@@ -43,12 +43,10 @@ function showQuotaModal(message) {
 
   document.body.appendChild(modal);
 
-  // Animate in
   requestAnimationFrame(function () {
     modal.classList.add('is-show');
   });
 
-  // Handlers
   const close = function () {
     modal.classList.remove('is-show');
     setTimeout(function () { modal.remove(); }, 300);
@@ -115,7 +113,6 @@ async function registerServiceWorker() {
       scope: '/'
     });
 
-    // Detect update
     reg.addEventListener('updatefound', function () {
       const newWorker = reg.installing;
       if (!newWorker) return;
@@ -161,12 +158,14 @@ function updateTierBadge() {
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      // Auto-reset quota kalau ganti hari
       if (typeof autoResetQuota === 'function') {
         autoResetQuota();
       }
       if (typeof updateQuotaBadges === 'function') {
         updateQuotaBadges();
+      }
+      if (typeof updateTierBadge === 'function') {
+        updateTierBadge();
       }
     }
   });
@@ -177,14 +176,9 @@ function initVisibilityHandler() {
    ───────────────────────────────────────────────────────────── */
 function initErrorBoundary() {
   window.addEventListener('error', function (e) {
-    // Log ke localStorage
     try {
       const errors = JSON.parse(localStorage.getItem('famz_errors') || '[]');
-      errors.push({
-        msg: e.message,
-        ts: Date.now(),
-        url: location.href
-      });
+      errors.push({ msg: e.message, ts: Date.now(), url: location.href });
       if (errors.length > 30) errors.shift();
       localStorage.setItem('famz_errors', JSON.stringify(errors));
     } catch (err) {}
@@ -229,29 +223,29 @@ async function initApp() {
   // 3. Init all tools
   initAllTools();
 
-// 4. Update UI badges
-updateQuotaBadges();
-initAppBadge();
-updateTierBadge(); 
+  // 4. Update UI badges
+  updateQuotaBadges();
+  initAppBadge();
+  updateTierBadge();
 
-  // 5. Register service worker (PWA)
+  // 5. Register service worker
   registerServiceWorker();
 
   // 6. Setup handlers
   initVisibilityHandler();
   initErrorBoundary();
 
-// 7. Welcome toast
-setTimeout(function () {
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-  if (session && session.connected) {
-    const tier = session.tier || 'free';
-    showToast('Welcome back — ' + tier.toUpperCase(), 'success');
-  }
-  updateTierBadge();
-}, 800);
+  // 7. Welcome toast + update tier
+  setTimeout(function () {
+    const session = typeof sessionGet === 'function' ? sessionGet() : null;
+    if (session && session.connected) {
+      const tier = session.tier || 'free';
+      showToast('Welcome back — ' + tier.toUpperCase(), 'success');
+    }
+    updateTierBadge();
+  }, 800);
 
-  // 8. Detect encoder mode (async, background)
+  // 8. Detect encoder mode
   if (typeof detectEncoderSupport === 'function') {
     detectEncoderSupport().then(function (supported) {
       const mode = supported ? 'WebCodecs (fast)' : 'FFmpeg (fallback)';
