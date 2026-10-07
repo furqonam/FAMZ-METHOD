@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/patcher.js
-   Patch Tool UI — drop zone, preview, progress, report, mode
+   Patch Tool UI — drop zone, preview, progress, report
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -12,7 +12,6 @@
    ───────────────────────────────────────────────────────────── */
 let _patchFile = null;
 let _patchRunning = false;
-let _patchMode = 'patch';
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — OPEN FILE PICKER
@@ -23,23 +22,7 @@ function openPicker(id) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — PATCH MODE
-   ───────────────────────────────────────────────────────────── */
-function pickPatchMode(mode) {
-  if (!mode) return;
-
-  document.querySelectorAll('.mode').forEach(function (m) {
-    m.classList.remove('is-active');
-  });
-
-  const target = document.querySelector('.mode[data-mode="' + mode + '"]');
-  if (target) target.classList.add('is-active');
-
-  _patchMode = mode;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 04 — PICK HANDLER
+   SECTION 03 — PICK HANDLER
    ───────────────────────────────────────────────────────────── */
 function onPickPatch(e) {
   const file = e.target.files && e.target.files[0];
@@ -71,7 +54,7 @@ function onPickPatch(e) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — UPDATE FILE TAG
+   SECTION 04 — UPDATE FILE TAG
    ───────────────────────────────────────────────────────────── */
 function updateFileTag(file) {
   const tag = document.getElementById('patch_filetag');
@@ -84,7 +67,7 @@ function updateFileTag(file) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — UPDATE PREVIEW
+   SECTION 05 — UPDATE PREVIEW
    ───────────────────────────────────────────────────────────── */
 function updatePreview(file) {
   const box = document.getElementById('patch_preview');
@@ -107,7 +90,7 @@ function updatePreview(file) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — STATUS
+   SECTION 06 — STATUS
    ───────────────────────────────────────────────────────────── */
 function setPatchStatus(text, kind) {
   const box = document.getElementById('patch_status');
@@ -121,7 +104,7 @@ function setPatchStatus(text, kind) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — PROGRESS
+   SECTION 07 — PROGRESS
    ───────────────────────────────────────────────────────────── */
 function showProgress() {
   const p = document.getElementById('patch_progress');
@@ -164,7 +147,7 @@ function patchLog(msg, kind) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — REPORT
+   SECTION 08 — REPORT
    ───────────────────────────────────────────────────────────── */
 function showReport(name, elapsed, before, after) {
   const box = document.getElementById('patch_report');
@@ -189,7 +172,7 @@ function hideReport() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — RUN PATCH
+   SECTION 09 — RUN PATCH
    ───────────────────────────────────────────────────────────── */
 async function runPatch() {
   if (_patchRunning) return;
@@ -216,7 +199,7 @@ async function runPatch() {
   showProgress();
   setPatchStatus('Processing...', 'working');
   setPatchProgress(5, 'Reading file');
-  patchLog('Reading ' + _patchFile.name + ' — mode: ' + _patchMode);
+  patchLog('Reading ' + _patchFile.name);
 
   try {
     const buffer = await readFileAsBuffer(_patchFile);
@@ -228,9 +211,7 @@ async function runPatch() {
     patchLog('Patching atoms');
 
     const result = patchMP4(buffer, {
-      mode: _patchMode,
-      platform: 'tiktok',
-      speedScale: 2
+      platform: 'tiktok'
     });
 
     setPatchProgress(70, 'Validating output');
@@ -268,7 +249,7 @@ async function runPatch() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 11 — DRAG & DROP
+   SECTION 10 — DRAG & DROP
    ───────────────────────────────────────────────────────────── */
 function initPatchDragDrop() {
   const drop = document.getElementById('patch_drop');
@@ -301,13 +282,13 @@ function initPatchDragDrop() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — INIT
+   SECTION 11 — INIT
    ───────────────────────────────────────────────────────────── */
 function initPatcher() {
   initPatchDragDrop();
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 13 — EXPORT
+   SECTION 12 — EXPORT
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] patcher.js loaded');
