@@ -48,13 +48,13 @@ function patchMP4(buffer, opts) {
     repl.set(mvhd, rebuildMvhdSafe(arr, dv, mvhd));
   }
 
-  /* ─── STEP B: Spoof avc1 resolution + btrt bitrate ─── */
+  /* ─── STEP B: Spoof avc1/hvc1 resolution + btrt bitrate ─── */
   const platform = opts.platform || 'tiktok';
   const target = PLATFORM_TARGETS[platform] || PLATFORM_TARGETS.tiktok;
   const spoofMap = spoofResolutionAndBitrate(arr, dv, moov, target);
   spoofMap.forEach(function(v, k) { repl.set(k, v); });
 
-  /* ─── STEP C: Inject signature udta ─── */
+  /* ─── STEP C: Inject signature udta (replace, anti double-stack) ─── */
   const sigUdta = buildSignatureUdta();
   const existingUdta = pickChild(moov, 'udta');
   if (existingUdta) {
@@ -112,7 +112,7 @@ function patchMP4(buffer, opts) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — MVHD REBUILD (Safe)
+   SECTION 03 — MVHD REBUILD (SAFE — only spoof creation time)
    ───────────────────────────────────────────────────────────── */
 function rebuildMvhdSafe(arr, dv, atom) {
   const version = arr[atom.contentStart];
@@ -121,26 +121,22 @@ function rebuildMvhdSafe(arr, dv, atom) {
   const now = Math.floor(Date.now() / 1000) + 2082844800;
 
   if (version === 0) {
+    // 32-bit times — spoof creation + modification time only
+    // Duration & timescale: KEEP ORIGINAL (biar gallery baca durasi bener)
     odv.setUint32(12, now, false);
     odv.setUint32(16, now, false);
-    // TRICK: spoof timescale + duration → TikTok skip re-encode
-    odv.setUint32(20, 0xFFFFFFFF, false);
-    odv.setUint32(24, 0xFFFFFFFF, false);
   } else {
+    // 64-bit times
     odv.setUint32(12, 0, false);
     odv.setUint32(16, now, false);
     odv.setUint32(20, 0, false);
     odv.setUint32(24, now, false);
-    odv.setUint32(28, 0, false);
-    odv.setUint32(32, 0xFFFFFFFF, false);
-    odv.setUint32(36, 0, false);
-    odv.setUint32(40, 0xFFFFFFFF, false);
   }
   return out;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — SPOOF RESOLUTION + BITRATE
+   SECTION 04 — SPOOF RESOLUTION + BITRATE (H.264 + HEVC)
    ───────────────────────────────────────────────────────────── */
 function spoofResolutionAndBitrate(arr, dv, moov, target) {
   const repl = new Map();
@@ -160,16 +156,17 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 
     const entryType = readType(arr, entryStart + 4);
 
+    // Handle H.264 (avc1/avc3) + HEVC (hvc1/hev1)
     if (entryType === 'avc1' || entryType === 'avc3' ||
-    entryType === 'hvc1' || entryType === 'hev1') {
+        entryType === 'hvc1' || entryType === 'hev1') {
       const entrySize = dv.getUint32(entryStart, false);
       if (entrySize > stsd.end - entryStart || entrySize < 32) continue;
 
       const entry = arr.slice(entryStart, entryStart + entrySize).slice();
       const edv = new DataView(entry.buffer);
 
-      // avc1 layout: size(4) + type(4) + reserved(6) + data_ref(2)
-      //              + width(2) + height(2) + ...
+      // Layout avc1/hvc1 sama: size(4) + type(4) + reserved(6)
+      // + data_ref(2) + width(2) + height(2)
       const wOff = 16;
       const curW = edv.getUint16(wOff, false);
       const curH = edv.getUint16(wOff + 2, false);
@@ -192,7 +189,6 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
         bdv.setUint32(16, target.bitrate, false);
       }
 
-      // Rebuild stsd with new entry
       repl.set(stsd, rebuildStsdWithEntry(arr, stsd, entry));
     }
   }
@@ -230,8 +226,8 @@ function rebuildStsdWithEntry(arr, stsd, newEntry) {
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(8 + offsets.length * 4);
   const dv = new DataView(body.buffer);
-  dv.setUint32(0, 0, false);              // version + flags
-  dv.setUint32(4, offsets.length, false); // entry count
+  dv.setUint32(0, 0, false);
+  dv.setUint32(4, offsets.length, false);
   for (let i = 0; i < offsets.length; i++) {
     dv.setUint32(8 + i * 4, (offsets[i] + delta) >>> 0, false);
   }
@@ -274,7 +270,7 @@ function buildSignatureUdta() {
     buildTag('\u00A9swr', 'FAMZ METHOD v1.0'),
     buildTag('\u00A9prd', 'vurkonnn'),
     buildTag('\u00A9des', 'Optimized by FAMZ METHOD'),
-    buildTag('\u00A9cmt', 'Processed via FAMZ METHOD'),
+    buildTag('\u00A9cmt', 't.me/famz_bot'),
     buildTag('\u00A9day', today)
   ];
 
@@ -293,8 +289,8 @@ function buildTag(fourCC, text) {
   const dv = new DataView(data.buffer);
   dv.setUint32(0, data.length, false);
   writeType(data, 4, 'data');
-  dv.setUint32(8, 1, false);  // type: UTF-8
-  dv.setUint32(12, 0, false); // locale
+  dv.setUint32(8, 1, false);
+  dv.setUint32(12, 0, false);
   data.set(tb, 16);
   return buildAtom(fourCC, data);
 }
@@ -304,23 +300,23 @@ function buildTag(fourCC, text) {
    ───────────────────────────────────────────────────────────── */
 function buildHdlr() {
   const body = new Uint8Array(25);
-  body[8] = 0x6d;  // 'm'
-  body[9] = 0x64;  // 'd'
-  body[10] = 0x69; // 'i'
-  body[11] = 0x72; // 'r'
-  body[12] = 0x61; // 'a'
-  body[13] = 0x70; // 'p'
-  body[14] = 0x70; // 'p'
-  body[15] = 0x6c; // 'l'
+  body[8]  = 0x6d; // m
+  body[9]  = 0x64; // d
+  body[10] = 0x69; // i
+  body[11] = 0x72; // r
+  body[12] = 0x61; // a
+  body[13] = 0x70; // p
+  body[14] = 0x70; // p
+  body[15] = 0x6c; // l
   return buildAtom('hdlr', body);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MERGE UDTA
+   SECTION 12 — MERGE UDTA (REPLACE total — anti double-stack)
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
-  // REPLACE total — anti double-stack
-  // Kalau file udah pernah di-patch, tag lama dihapus, ganti FAMZ
+  // Replace total — hapus tag lama, ganti dengan signature FAMZ
+  // Cegah double-stack kalau file udah pernah di-patch sebelumnya
   return sigUdta;
 }
 
@@ -344,7 +340,6 @@ function validatePatch(output) {
       return { ok: false, reason: 'moov after mdat' };
     }
 
-    // Check stco offsets point inside mdat
     for (let i = 0; i < moov.children.length; i++) {
       const trak = moov.children[i];
       if (trak.type !== 'trak') continue;
