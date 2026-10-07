@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/05-tabs.css
-   Tab switcher (no backdrop-filter)
+   Tab switcher (iOS Segmented Control) + Icon SVG
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 01 — TABS CONTAINER
+   SECTION 01 — TABS CONTAINER (Liquid Glass)
    ───────────────────────────────────────────────────────────── */
 .tabs {
   display: flex;
@@ -15,7 +15,9 @@
   max-width: 520px;
   margin: 0 auto var(--sp-4);
   padding: 4px;
-  background: rgba(15, 18, 25, 0.85);
+  background: var(--glass-1);
+  backdrop-filter: var(--blur-sm);
+  -webkit-backdrop-filter: var(--blur-sm);
   border: 1px solid var(--line-1);
   border-radius: var(--r-pill);
   overflow-x: auto;
@@ -23,7 +25,9 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.tabs::-webkit-scrollbar { display: none; }
+.tabs::-webkit-scrollbar {
+  display: none;
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — TAB BUTTON
@@ -52,6 +56,7 @@
   display: grid;
   place-items: center;
   color: inherit;
+  transition: transform var(--t-base);
   flex-shrink: 0;
 }
 
@@ -72,7 +77,9 @@
   text-transform: uppercase;
 }
 
-.tab:active { transform: scale(0.96); }
+.tab:active {
+  transform: scale(0.96);
+}
 
 .tab.is-active {
   background: var(--grad-primary);
@@ -87,7 +94,9 @@
 /* ─────────────────────────────────────────────────────────────
    SECTION 03 — TOOL SECTIONS
    ───────────────────────────────────────────────────────────── */
-.tool { display: none; }
+.tool {
+  display: none;
+}
 
 .tool.is-active {
   display: block;
@@ -100,21 +109,43 @@
 .settings {
   margin-bottom: var(--sp-4);
   padding: var(--sp-4);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--glass-1);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
 }
 
-.settings .field-label:first-child { margin-top: 0; }
-.settings .field { margin-bottom: var(--sp-2); }
-.settings .field:last-child { margin-bottom: 0; }
+.settings .field-label:first-child {
+  margin-top: 0;
+}
+
+.settings .field {
+  margin-bottom: var(--sp-2);
+}
+
+.settings .field:last-child {
+  margin-bottom: 0;
+}
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 05 — RESPONSIVE
    ───────────────────────────────────────────────────────────── */
 @media (max-width: 380px) {
-  .tabs { padding: 3px; gap: 2px; }
-  .tab { min-width: 60px; padding: var(--sp-2); }
-  .tab__icon { width: 16px; height: 16px; }
-  .tab__label { font-size: 9px; }
+  .tabs {
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .tab {
+    min-width: 60px;
+    padding: var(--sp-2);
+  }
+
+  .tab__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tab__label {
+    font-size: 9px;
+  }
 }
