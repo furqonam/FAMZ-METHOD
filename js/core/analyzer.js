@@ -316,10 +316,14 @@ function buildResult(platform, url, data) {
     hdRetained = true;
   }
 
+  // Fallback: kalau platform YT/IG tanpa data width/height
+  // → hdRetained: null (unknown), bukan false
+  const isUnknown = (w === 0 && h === 0 && !data.hdplay);
+
   return {
     platform: platform,
     url: url,
-    hdRetained: hdRetained,
+    hdRetained: isUnknown ? null : hdRetained,
     resolution: (w && h) ? (w + '×' + h) : '—',
     bitrate: estimateBitrate(data),
     fileSize: data.size || 0,
