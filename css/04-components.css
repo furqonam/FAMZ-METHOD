@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    css/04-components.css
-   Components — MAX PERFORMANCE (no blur, no shadow, no animation)
+   Card, Button, Drop, Progress, Status, Report, Preview, Toast, Modal
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
    ═══════════════════════════════════════════════════════════════ */
 
@@ -9,11 +9,9 @@
    SECTION 01 — CARD
    ───────────────────────────────────────────────────────────── */
 .card {
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   padding: var(--sp-5);
   margin-bottom: var(--sp-4);
-  background: rgba(15, 18, 25, 0.92);
-  border: 1px solid var(--line-2);
 }
 
 .card__head {
@@ -25,6 +23,7 @@
 .card__title {
   font-size: var(--fs-lg);
   font-weight: 800;
+  letter-spacing: -0.5px;
   margin-bottom: var(--sp-1);
   color: var(--txt-1);
 }
@@ -52,17 +51,19 @@
 .field {
   width: 100%;
   padding: var(--sp-3) var(--sp-4);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   color: var(--txt-1);
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
   outline: none;
+  transition: var(--t-fast);
 }
 
 .field:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .field::placeholder {
@@ -105,11 +106,13 @@ select.field option {
   border: 1.5px dashed rgba(10, 132, 255, 0.3);
   border-radius: var(--r-lg);
   background: rgba(10, 132, 255, 0.03);
+  transition: var(--t-base);
   cursor: pointer;
   text-align: center;
 }
 
 .drop:active {
+  transform: scale(0.98);
   border-color: var(--accent);
   background: rgba(10, 132, 255, 0.08);
 }
@@ -119,6 +122,7 @@ select.field option {
   color: var(--accent);
   line-height: 1;
   margin-bottom: var(--sp-2);
+  filter: drop-shadow(0 0 12px var(--accent-glow));
 }
 
 .drop__title {
@@ -142,7 +146,7 @@ select.field option {
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   margin-bottom: var(--sp-4);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   font-family: var(--font-mono);
@@ -165,7 +169,7 @@ select.field option {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — PREVIEW
+   SECTION 05 — PREVIEW (Custom Player)
    ───────────────────────────────────────────────────────────── */
 .preview {
   position: relative;
@@ -176,6 +180,7 @@ select.field option {
   overflow: hidden;
   background: #000;
   border: 1px solid var(--line-2);
+  box-shadow: var(--sh-2);
   max-width: 280px;
   width: 100%;
 }
@@ -197,7 +202,21 @@ select.field option {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.85);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.preview:hover .preview__controls,
+.preview:focus-within .preview__controls,
+.preview.is-playing .preview__controls {
+  opacity: 1;
+}
+
+.preview:not(.is-playing) .preview__controls {
+  opacity: 1;
 }
 
 .preview__btn {
@@ -210,12 +229,15 @@ select.field option {
   border-radius: 50%;
   color: #fff;
   cursor: pointer;
+  transition: var(--t-fast);
   flex-shrink: 0;
   padding: 0;
 }
 
 .preview__btn:active {
+  transform: scale(0.92);
   background: rgba(10, 132, 255, 0.4);
+  border-color: var(--accent);
 }
 
 .preview__btn svg {
@@ -232,13 +254,16 @@ select.field option {
   border-radius: var(--r-pill);
   overflow: hidden;
   cursor: pointer;
+  position: relative;
 }
 
 .preview__progress-fill {
   height: 100%;
   width: 0%;
-  background: #0a84ff;
+  background: var(--grad-primary);
   border-radius: var(--r-pill);
+  transition: width 0.1s linear;
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .preview__time {
@@ -246,6 +271,7 @@ select.field option {
   font-family: var(--font-mono);
   color: rgba(255, 255, 255, 0.9);
   flex-shrink: 0;
+  letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
@@ -258,7 +284,7 @@ select.field option {
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   margin-bottom: var(--sp-4);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--glass-1);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
   font-size: var(--fs-sm);
@@ -271,18 +297,23 @@ select.field option {
   border-radius: 50%;
   background: var(--txt-4);
   flex-shrink: 0;
+  transition: var(--t-fast);
 }
 
 .status.is-working .status__dot {
   background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse-dot 1s ease-in-out infinite;
 }
 
 .status.is-success .status__dot {
   background: var(--success);
+  box-shadow: 0 0 12px var(--success);
 }
 
 .status.is-error .status__dot {
   background: var(--danger);
+  box-shadow: 0 0 12px var(--danger);
 }
 
 .status__text {
@@ -296,7 +327,7 @@ select.field option {
 .progress {
   margin-bottom: var(--sp-4);
   padding: var(--sp-4);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--glass-1);
   border: 1px solid var(--line-1);
   border-radius: var(--r-sm);
 }
@@ -312,8 +343,10 @@ select.field option {
 .progress__fill {
   height: 100%;
   width: 0%;
-  background: #0a84ff;
+  background: var(--grad-primary);
   border-radius: var(--r-pill);
+  transition: width var(--t-base);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .progress__meta {
@@ -371,6 +404,7 @@ select.field option {
   background: rgba(48, 209, 88, 0.06);
   border: 1px solid rgba(48, 209, 88, 0.2);
   border-radius: var(--r-sm);
+  animation: fade-in var(--t-base);
 }
 
 .report__row {
@@ -397,9 +431,10 @@ select.field option {
 .result {
   margin-bottom: var(--sp-4);
   padding: var(--sp-5);
-  background: rgba(15, 18, 25, 0.92);
+  background: var(--glass-1);
   border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
+  animation: fade-in var(--t-base);
 }
 
 .result__badge {
@@ -442,7 +477,7 @@ select.field option {
 
 .result__item {
   padding: var(--sp-3);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.2);
   border-radius: var(--r-sm);
   border: 1px solid var(--line-1);
 }
@@ -475,21 +510,36 @@ select.field option {
   padding: var(--sp-4) var(--sp-5);
   font-size: var(--fs-base);
   font-weight: 700;
+  letter-spacing: 0.3px;
   border-radius: var(--r-pill);
-  border: none;
+  transition: var(--t-base);
+  position: relative;
+  overflow: hidden;
 }
 
 .btn--primary {
   color: #fff;
   background: var(--grad-primary);
+  box-shadow: var(--sh-2), 0 0 24px var(--accent-glow);
+}
+
+.btn--primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--grad-shine);
+  pointer-events: none;
 }
 
 .btn--primary:active:not(:disabled) {
-  opacity: 0.85;
+  transform: scale(0.97);
+  box-shadow: var(--sh-1), 0 0 16px var(--accent-glow);
 }
 
 .btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
 }
 
 .btn--ghost {
@@ -500,6 +550,7 @@ select.field option {
 
 .btn--ghost:active {
   background: rgba(255, 255, 255, 0.08);
+  transform: scale(0.97);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -513,15 +564,18 @@ select.field option {
   z-index: 999;
   padding: var(--sp-3) var(--sp-5);
   max-width: calc(100vw - 32px);
-  background: rgba(20, 20, 28, 0.95);
+  background: rgba(20, 20, 28, 0.85);
+  backdrop-filter: var(--blur-md);
+  -webkit-backdrop-filter: var(--blur-md);
   border: 1px solid var(--line-3);
   border-radius: var(--r-pill);
   color: var(--txt-1);
   font-size: var(--fs-sm);
   font-weight: 600;
+  box-shadow: var(--sh-3);
   opacity: 0;
   pointer-events: none;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform var(--t-base), opacity var(--t-base);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -548,7 +602,7 @@ select.field option {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MODAL
+   SECTION 12 — MODAL (Quota)
    ───────────────────────────────────────────────────────────── */
 .modal {
   position: fixed;
@@ -560,7 +614,7 @@ select.field option {
   padding: var(--sp-4);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--t-base);
 }
 
 .modal.is-show {
@@ -571,7 +625,9 @@ select.field option {
 .modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .modal__box {
@@ -583,8 +639,7 @@ select.field option {
   padding: var(--sp-6);
   border-radius: var(--r-xl);
   text-align: center;
-  background: rgba(20, 24, 32, 0.95);
-  border: 1px solid var(--line-2);
+  animation: pop-in var(--t-base);
 }
 
 .modal__icon {
@@ -615,7 +670,7 @@ select.field option {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 13 — ACCOUNT
+   SECTION 13 — ACCOUNT MODAL
    ───────────────────────────────────────────────────────────── */
 .account__avatar-row {
   display: flex;
@@ -644,6 +699,12 @@ select.field option {
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  transition: var(--t-fast);
+}
+
+.avatar:active {
+  transform: scale(0.95);
+  border-color: var(--accent);
 }
 
 .avatar img {
@@ -685,11 +746,12 @@ select.field option {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #000000;
+  background: var(--bg-0);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: fade-in 0.3s ease;
 }
 
 .gate[hidden] {
@@ -702,8 +764,7 @@ select.field option {
   padding: 44px 32px;
   text-align: center;
   border-radius: var(--r-xl);
-  background: rgba(20, 24, 32, 0.95);
-  border: 1px solid var(--line-2);
+  animation: pop-in 0.3s ease;
 }
 
 .gate__logo {
@@ -722,6 +783,7 @@ select.field option {
   border-radius: var(--r-lg);
   font-size: 32px;
   font-weight: 800;
+  box-shadow: 0 0 32px var(--accent-glow);
 }
 
 .gate__title {
@@ -757,6 +819,10 @@ select.field option {
   font-weight: 600;
 }
 
+.gate__foot a:hover {
+  text-decoration: underline;
+}
+
 body:has(.gate:not([hidden])) {
   overflow: hidden;
 }
@@ -774,12 +840,15 @@ body:has(.gate:not([hidden])) {
   border-radius: 50%;
   color: #ff453a;
   cursor: pointer;
+  transition: var(--t-fast);
   flex-shrink: 0;
   padding: 0;
 }
 
 .support-btn:active {
+  transform: scale(0.92);
   background: rgba(255, 69, 58, 0.2);
+  box-shadow: 0 0 12px rgba(255, 69, 58, 0.4);
 }
 
 .support-btn svg {
@@ -832,10 +901,14 @@ body:has(.gate:not([hidden])) {
   color: var(--txt-2);
   font-size: 12px;
   font-weight: 600;
+  transition: var(--t-fast);
+  text-decoration: none;
 }
 
 .social-link:active {
+  transform: scale(0.96);
   background: var(--accent-dim);
+  border-color: rgba(10, 132, 255, 0.3);
   color: var(--accent);
 }
 
