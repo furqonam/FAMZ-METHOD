@@ -11,7 +11,8 @@
    SECTION 01 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const SESSION_CONFIG = {
-  apiBase: 'https://famz-api.furqonalmughni95.workers.dev',
+  apiBase: 'https://famz-bot.furqonalmughni95.workers.dev',
+  authPath: '/auth',                    // ← BEDA dari FAMZ lama
   storageKey: 'famz_session',
   usageKey: 'famz_usage',
   resetKey: 'famz_last_reset',
@@ -94,10 +95,9 @@ async function verifySessionAsync(identifier) {
   if (!identifier) return;
 
   try {
-    const isTgId = /^\d+$/.test(identifier);
-    const param = isTgId ? 'tg=' + identifier : 'username=' + identifier;
+    const param = 'tg=' + encodeURIComponent(identifier);
 
-    const res = await fetch(SESSION_CONFIG.apiBase + '/api/auth?' + param, {
+    const res = await fetch(SESSION_CONFIG.apiBase + SESSION_CONFIG.authPath + '?' + param, {
       headers: buildHeaders()
     });
 
@@ -105,20 +105,19 @@ async function verifySessionAsync(identifier) {
 
     const data = await res.json();
 
-    if (data.ok && data.registered) {
+    if (data.ok) {
       _famzSession.user = {
         username: data.username || identifier,
         tg: data.tg || null,
         tier: data.tier || 'free',
-        remaining: data.remaining || null,
-        expiry: data.expiry || null
+        remaining: data.remaining,
+        expiry: data.expiry || null,
+        is_owner: data.is_owner || false
       };
       _famzSession.tier = data.tier || 'free';
       _famzSession.connected = true;
 
       localStorage.setItem(SESSION_CONFIG.storageKey, JSON.stringify(_famzSession.user));
-    } else if (data.reason === 'username_not_found') {
-      sessionLogout();
     }
   } catch (e) {
     // Silent fail
@@ -135,10 +134,9 @@ async function sessionLogin(identifier) {
     throw new Error('Username atau Telegram ID minimal 3 karakter');
   }
 
-  const isTgId = /^\d+$/.test(val);
-  const param = isTgId ? 'tg=' + val : 'username=' + val;
+  const param = 'tg=' + encodeURIComponent(val);
 
-  const res = await fetch(SESSION_CONFIG.apiBase + '/api/auth?' + param, {
+  const res = await fetch(SESSION_CONFIG.apiBase + SESSION_CONFIG.authPath + '?' + param, {
     headers: buildHeaders()
   });
 
@@ -149,19 +147,16 @@ async function sessionLogin(identifier) {
   const data = await res.json();
 
   if (!data.ok) {
-    throw new Error(data.reason || 'Login gagal');
-  }
-
-  if (!data.registered) {
-    throw new Error('Belum terdaftar. Daftar via @famz_bot dulu.');
+    throw new Error(data.error || 'Login gagal');
   }
 
   _famzSession.user = {
     username: data.username || val,
     tg: data.tg || null,
     tier: data.tier || 'free',
-    remaining: data.remaining || null,
-    expiry: data.expiry || null
+    remaining: data.remaining,
+    expiry: data.expiry || null,
+    is_owner: data.is_owner || false
   };
   _famzSession.tier = data.tier || 'free';
   _famzSession.connected = true;
@@ -201,6 +196,10 @@ function sessionIsPro() {
 
 function sessionIsBasic() {
   return _famzSession.tier === 'basic' || _famzSession.tier === 'pro';
+}
+
+function sessionIsOwner() {
+  return _famzSession.user && _famzSession.user.is_owner === true;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -302,27 +301,20 @@ function autoResetQuota() {
 
   try {
     last = localStorage.getItem(SESSION_CONFIG.resetKey);
-  } catch (e) {
-    console.warn('[FAMZ] Read reset key failed:', e);
-  }
+  } catch (e) {}
 
   if (last !== today) {
     try {
       localStorage.removeItem(SESSION_CONFIG.usageKey);
       localStorage.setItem(SESSION_CONFIG.resetKey, today);
-      console.log('[FAMZ] Quota reset for', today);
-    } catch (e) {
-      console.warn('[FAMZ] Quota reset failed:', e);
-    }
+    } catch (e) {}
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — HMAC SIGNATURE (Security)
+   SECTION 12 — BUILD HEADERS
    ───────────────────────────────────────────────────────────── */
 function buildHeaders() {
-  // Simple headers — Worker gak validasi signature
-  // Jadi gak perlu kirim header custom (hindari CORS issue)
   return {
     'Accept': 'application/json'
   };
@@ -331,4 +323,4 @@ function buildHeaders() {
 /* ─────────────────────────────────────────────────────────────
    SECTION 13 — EXPORT
    ───────────────────────────────────────────────────────────── */
-console.log('[FAMZ] session.js loaded');
+console.log('[FAMZ] session.js loaded — worker: ' + SESSION_CONFIG.apiBase);
