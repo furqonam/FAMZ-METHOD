@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝙫𝟭.𝟬
    js/ui/app.js
    App Orchestration + Gate + Account + Badges + Support
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
@@ -8,32 +8,36 @@
 'use strict';
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 01 — HELPERS
+   HELPERS
    ───────────────────────────────────────────────────────────── */
 function esc(text) {
-  if (typeof escapeHtml === 'function') {
-    try { return escapeHtml(text); } catch (e) {}
-  }
   const div = document.createElement('div');
   div.textContent = String(text || '');
   return div.innerHTML;
 }
+
 function openSupport() {
-  window.open('https://sociabuzz.com/famzid/support', '_blank', 'noopener,noreferrer');
+  window.open('https://t.me/vurkonnn', '_blank', 'noopener,noreferrer');
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 02 — GATE (Login Fullscreen)
+   LOGIN VIA BOT
+   ───────────────────────────────────────────────────────────── */
+function openBotForLogin() {
+  window.open('https://t.me/Famzzz_bot', '_blank');
+}
+
+function openBotForVip() {
+  window.open('https://t.me/Famzzz_bot', '_blank');
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GATE (Login Fullscreen)
    ───────────────────────────────────────────────────────────── */
 function openGate(msg) {
   const gate = document.getElementById('gate');
   if (gate) gate.hidden = false;
   if (msg) showGateErr(msg);
-
-  setTimeout(function () {
-    const input = document.getElementById('gate_input');
-    if (input) input.focus();
-  }, 300);
 }
 
 function closeGate() {
@@ -45,75 +49,36 @@ function showGateErr(msg) {
   const el = document.getElementById('gate_err');
   if (el) {
     el.textContent = msg;
-    el.classList.add('is-show');
+    el.style.color = 'var(--danger)';
   }
 }
 
 function clearGateErr() {
   const el = document.getElementById('gate_err');
-  if (el) {
-    el.textContent = '';
-    el.classList.remove('is-show');
-  }
-}
-
-async function gateLogin() {
-  const input = document.getElementById('gate_input');
-  const btn = document.getElementById('gate_btn');
-  const val = input ? input.value.trim().toLowerCase().replace(/^@/, '') : '';
-
-  clearGateErr();
-
-  if (!val || val.length < 3) {
-    showGateErr('Masukkan username atau TG ID (min 3 karakter)');
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = 'Checking...';
-  }
-
-  try {
-    await sessionLogin(val);
-
-    closeGate();
-    updateTierBadge();
-
-    const session = sessionGet();
-    showToast('Welcome — ' + session.tier.toUpperCase(), 'success');
-
-  } catch (err) {
-    console.error('[gate]', err);
-    showGateErr(err.message || 'Login gagal. Coba lagi.');
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = 'Continue';
-    }
-  }
+  if (el) el.textContent = '';
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — TIER BADGE
+   TIER BADGE
    ───────────────────────────────────────────────────────────── */
 function handleTierClick() {
   const session = typeof sessionGet === 'function' ? sessionGet() : null;
 
   if (session && session.connected) {
-    if (typeof openAccountModal === 'function') {
-      openAccountModal();
-    }
+    if (typeof openAccountModal === 'function') openAccountModal();
   } else {
     openGate();
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — QUOTA MODAL
+   QUOTA MODAL
    ───────────────────────────────────────────────────────────── */
-function showQuotaModal(message) {
+function showQuotaModal(message, reason) {
   const old = document.getElementById('famz_quota_modal');
   if (old) old.remove();
+
+  const showVip = (reason === 'quota_exceeded' || !reason);
 
   const modal = document.createElement('div');
   modal.id = 'famz_quota_modal';
@@ -121,12 +86,13 @@ function showQuotaModal(message) {
   modal.innerHTML = [
     '<div class="modal__backdrop"></div>',
     '<div class="modal__box glass">',
-      '<div class="modal__icon">⏱</div>',
-      '<h3 class="modal__title">Kuota Habis</h3>',
-      '<p class="modal__text">' + esc(message || 'Kuota harian lu udah abis. Upgrade buat unlimited.') + '</p>',
+      '<div class="modal__icon">' + (showVip ? '💎' : '⏱') + '</div>',
+      '<h3 class="modal__title">' + (showVip ? 'Batas Tercapai' : 'Akses Ditolak') + '</h3>',
+      '<p class="modal__text">' + esc(message || 'Kuota harian Anda telah habis.') + '</p>',
+      showVip ? '<p class="modal__sub">Tunggu 24 jam atau upgrade ke VIP untuk akses tanpa batas.</p>' : '',
       '<div class="modal__actions">',
-        '<button class="btn btn--ghost" id="famz_quota_close">Nanti</button>',
-        '<button class="btn btn--primary" id="famz_quota_upgrade">Support</button>',
+        '<button class="btn btn--ghost" id="famz_quota_close">Tunggu 24 Jam</button>',
+        showVip ? '<button class="btn btn--primary" id="famz_quota_vip">💎 Daftar VIP</button>' : '',
       '</div>',
     '</div>'
   ].join('');
@@ -146,27 +112,55 @@ function showQuotaModal(message) {
   const closeBtn = document.getElementById('famz_quota_close');
   if (closeBtn) closeBtn.addEventListener('click', close);
 
-  const upgradeBtn = document.getElementById('famz_quota_upgrade');
-  if (upgradeBtn) {
-    upgradeBtn.addEventListener('click', function () {
-      window.open('https://t.me/vurkonnn', '_blank');
+  const vipBtn = document.getElementById('famz_quota_vip');
+  if (vipBtn) {
+    vipBtn.addEventListener('click', function () {
+      close();
+      openBotForVip();
     });
   }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — TOOL INIT
+   AUTO-LOGIN DARI URL PARAMETER
    ───────────────────────────────────────────────────────────── */
-function initAllTools() {
-  try { if (typeof initPatcher === 'function') initPatcher(); } catch (e) { console.warn('[init] patcher', e); }
-  try { if (typeof initEncoder === 'function') initEncoder(); } catch (e) { console.warn('[init] encoder', e); }
-  try { if (typeof initUpscale === 'function') initUpscale(); } catch (e) { console.warn('[init] upscale', e); }
-  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) { console.warn('[init] analyzer', e); }
-  try { if (typeof initQueue === 'function') initQueue(); } catch (e) { console.warn('[init] queue', e); }
+async function checkUrlLogin() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tgId = urlParams.get('tg');
+
+  if (!tgId) return false;
+
+  try {
+    await sessionLogin(tgId);
+    closeGate();
+    updateTierBadge();
+    updateQuotaBadges();
+
+    const session = sessionGet();
+    showToast('Selamat datang — ' + session.tier.toUpperCase(), 'success');
+
+    window.history.replaceState({}, '', window.location.pathname);
+
+    return true;
+  } catch (err) {
+    openGate(err.message);
+    return false;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — BADGES
+   TOOL INIT
+   ───────────────────────────────────────────────────────────── */
+function initAllTools() {
+  try { if (typeof initPatcher  === 'function') initPatcher();  } catch (e) {}
+  try { if (typeof initEncoder  === 'function') initEncoder();  } catch (e) {}
+  try { if (typeof initUpscale  === 'function') initUpscale();  } catch (e) {}
+  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) {}
+  try { if (typeof initQueue    === 'function') initQueue();    } catch (e) {}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   BADGES
    ───────────────────────────────────────────────────────────── */
 function updateQuotaBadges() {
   const features = ['patch', 'encode', 'upscale', 'analyze'];
@@ -192,9 +186,7 @@ function updateQuotaBadges() {
 
 function initAppBadge() {
   const badge = document.querySelector('.badge');
-  if (badge && !badge.textContent.trim()) {
-    badge.textContent = 'v1.0';
-  }
+  if (badge && !badge.textContent.trim()) badge.textContent = 'v1.0';
 }
 
 function updateTierBadge() {
@@ -213,8 +205,22 @@ function updateTierBadge() {
   }
 }
 
+function quotaRemaining(feature) {
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+  if (!session || !session.connected) return 0;
+
+  const limits = {
+    free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
+    basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
+    pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
+  };
+
+  const table = limits[session.tier] || limits.free;
+  return table[feature] === -1 ? Infinity : table[feature];
+}
+
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — PWA SERVICE WORKER
+   PWA SERVICE WORKER
    ───────────────────────────────────────────────────────────── */
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
@@ -228,7 +234,7 @@ async function registerServiceWorker() {
 
       newWorker.addEventListener('statechange', function () {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          showToast('Update tersedia — refresh buat pakai', 'info', 5000);
+          showToast('Update tersedia — refresh untuk memakai versi terbaru', 'info', 5000);
         }
       });
     });
@@ -238,14 +244,14 @@ async function registerServiceWorker() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — HANDLERS
+   HANDLERS
    ───────────────────────────────────────────────────────────── */
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      if (typeof autoResetQuota === 'function') autoResetQuota();
+      if (typeof autoResetQuota    === 'function') autoResetQuota();
       if (typeof updateQuotaBadges === 'function') updateQuotaBadges();
-      if (typeof updateTierBadge === 'function') updateTierBadge();
+      if (typeof updateTierBadge   === 'function') updateTierBadge();
     }
   });
 }
@@ -275,88 +281,45 @@ function initErrorBoundary() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — APP INIT
+   APP INIT
    ───────────────────────────────────────────────────────────── */
 async function initApp() {
   console.log('[FAMZ] Starting app...');
 
-  // 1. Session init
   try {
     if (typeof sessionInit === 'function') await sessionInit();
   } catch (e) {
     console.warn('[init] session failed', e);
   }
 
-  // 2. Cek session — kalo gak login, buka gate
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-  const hasSavedSession = localStorage.getItem('famz_session');
-
-  if (!session || !session.connected) {
-    if (!hasSavedSession) {
-      openGate();
-    } else {
-      try {
-        const saved = JSON.parse(hasSavedSession);
-        if (saved && saved.username) {
-          await sessionLogin(saved.username).catch(function () {
-            openGate();
-          });
-        }
-      } catch (e) {
-        openGate();
-      }
-    }
+  const autoLogged = await checkUrlLogin();
+  if (!autoLogged) {
+    const session = typeof sessionGet === 'function' ? sessionGet() : null;
+    if (!session || !session.connected) openGate();
   }
 
-  // 3. Tabs
-  try {
-    if (typeof initTabs === 'function') initTabs();
-  } catch (e) {
-    console.warn('[init] tabs failed', e);
-  }
-
-  // 4. All tools
+  try { if (typeof initTabs === 'function') initTabs(); } catch (e) {}
   initAllTools();
 
-  // 5. Badges
   updateQuotaBadges();
   initAppBadge();
   updateTierBadge();
 
-  // 6. Load account
-  try {
-    if (typeof loadAccount === 'function') loadAccount();
-  } catch (e) {
-    console.warn('[init] account failed', e);
-  }
+  try { if (typeof loadAccount === 'function') loadAccount(); } catch (e) {}
 
-  // 7. PWA
   registerServiceWorker();
-
-  // 8. Handlers
   initVisibilityHandler();
   initErrorBoundary();
 
-  // 9. Welcome toast
   setTimeout(function () {
     const s = typeof sessionGet === 'function' ? sessionGet() : null;
     if (s && s.connected) {
-      showToast('Welcome back — ' + (s.tier || 'free').toUpperCase(), 'success');
+      showToast('Selamat datang — ' + (s.tier || 'free').toUpperCase(), 'success');
     }
     updateTierBadge();
   }, 800);
 
-  // 10. Encoder detection
-  if (typeof detectEncoderSupport === 'function') {
-    detectEncoderSupport().then(function (supported) {
-      console.log('[FAMZ] Encoder mode:', supported ? 'WebCodecs' : 'FFmpeg');
-    }).catch(function () {});
-  }
-
   console.log('[FAMZ] App ready');
 }
 
-/* ─────────────────────────────────────────────────────────────
-   SECTION 10 — EXPORT
-   ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] app.js loaded');
