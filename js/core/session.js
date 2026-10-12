@@ -7,9 +7,9 @@
 
 'use strict';
 
-/* ─────────────────────────────────────────────────────────────
-   CONFIG
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 01 — CONFIG
+   ═══════════════════════════════════════════════════════════════ */
 const SESSION_CONFIG = {
   apiBase:    'https://famz-bot.furqonalmughni95.workers.dev',
   authPath:   '/auth',
@@ -20,18 +20,27 @@ const SESSION_CONFIG = {
   deviceKey:  'famz_device_token'
 };
 
-/* ─────────────────────────────────────────────────────────────
-   SESSION STATE
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 02 — QUOTA TABLE
+   ═══════════════════════════════════════════════════════════════ */
+const QUOTA_TABLE = {
+  free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
+  basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
+  pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 03 — SESSION STATE
+   ═══════════════════════════════════════════════════════════════ */
 var _famzSession = {
   user: null,
   tier: 'free',
   connected: false
 };
 
-/* ─────────────────────────────────────────────────────────────
-   DEVICE TOKEN STORAGE
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 04 — DEVICE TOKEN STORAGE
+   ═══════════════════════════════════════════════════════════════ */
 function getStoredDeviceToken() {
   try { return localStorage.getItem(SESSION_CONFIG.deviceKey) || null; }
   catch (e) { return null; }
@@ -47,9 +56,9 @@ function clearDeviceToken() {
   catch (e) {}
 }
 
-/* ─────────────────────────────────────────────────────────────
-   INIT SESSION
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 05 — INIT SESSION
+   ═══════════════════════════════════════════════════════════════ */
 async function sessionInit() {
   autoResetQuota();
 
@@ -70,9 +79,9 @@ async function sessionInit() {
   return _famzSession;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   LOGIN
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 06 — LOGIN
+   ═══════════════════════════════════════════════════════════════ */
 async function sessionLogin(identifier) {
   const val = String(identifier || '').trim().toLowerCase().replace(/^@/, '');
   if (!val) throw new Error('ID tidak valid');
@@ -123,9 +132,9 @@ async function sessionLogin(identifier) {
   return _famzSession.user;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   LOGOUT
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 07 — LOGOUT
+   ═══════════════════════════════════════════════════════════════ */
 function sessionLogout() {
   _famzSession.user = null;
   _famzSession.tier = 'free';
@@ -135,9 +144,9 @@ function sessionLogout() {
   clearDeviceToken();
 }
 
-/* ─────────────────────────────────────────────────────────────
-   GET SESSION
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 08 — GET SESSION
+   ═══════════════════════════════════════════════════════════════ */
 function sessionGet() {
   return {
     user: _famzSession.user,
@@ -158,12 +167,18 @@ function sessionIsOwner() {
   return _famzSession.user && _famzSession.user.is_owner === true;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   QUOTA CHECK
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 09 — QUOTA
+   ═══════════════════════════════════════════════════════════════ */
 function quotaLimit(feature) {
   const table = QUOTA_TABLE[_famzSession.tier] || QUOTA_TABLE.free;
   return table[feature] != null ? table[feature] : 0;
+}
+
+function quotaRemaining(feature) {
+  const limit = quotaLimit(feature);
+  if (limit === -1) return Infinity;
+  return limit;
 }
 
 async function quotaConsume(feature) {
@@ -212,9 +227,9 @@ async function quotaConsume(feature) {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   DAILY RESET
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 — DAILY RESET
+   ═══════════════════════════════════════════════════════════════ */
 function autoResetQuota() {
   const today = new Date().toDateString();
   let last = null;
@@ -229,16 +244,7 @@ function autoResetQuota() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   QUOTA TABLE (local fallback)
-   ───────────────────────────────────────────────────────────── */
-const QUOTA_TABLE = {
-  free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
-  basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
-  pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
-};
-
-/* ─────────────────────────────────────────────────────────────
-   EXPORT
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 11 — EXPORT
+   ═══════════════════════════════════════════════════════════════ */
 console.log('[FAMZ] session.js loaded — worker: ' + SESSION_CONFIG.apiBase);
