@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- ═══════════════════════════════════════════════════════════════
-     𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
+     𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝙫𝟭.𝟬
      index.html
      Entry point — struktur UI utama
      © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
@@ -37,55 +37,72 @@
 
 <body>
 
-  <!-- AMBIENT -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 01 — AMBIENT BACKGROUND
+       ═══════════════════════════════════════════════════════════ -->
   <div class="ambient" aria-hidden="true">
     <div class="ambient__orb ambient__orb--a"></div>
     <div class="ambient__orb ambient__orb--b"></div>
     <div class="ambient__orb ambient__orb--c"></div>
   </div>
 
-<!-- LOGIN GATE -->
-<div id="gate" class="gate" hidden>
-  <div class="gate__box glass">
-    <div class="gate__logo">
-      <span class="gate__mark">F</span>
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 02 — LOGIN GATE
+       Halaman login dengan input Telegram ID + tombol ke bot
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="gate" class="gate" hidden>
+    <div class="gate__box glass">
+
+      <!-- 02.1 — Logo -->
+      <div class="gate__logo">
+        <span class="gate__mark">F</span>
+      </div>
+
+      <!-- 02.2 — Judul -->
+      <h2 class="gate__title">FAMZ METHOD</h2>
+      <p class="gate__sub">Masukkan Telegram ID Anda</p>
+
+      <!-- 02.3 — Input Telegram ID -->
+      <input
+        id="gate_input"
+        class="field gate__input"
+        type="text"
+        placeholder="Contoh: 12345678"
+        maxlength="32"
+        autocomplete="off"
+        spellcheck="false"
+        onkeydown="if(event.key==='Enter') gateLogin()">
+
+      <!-- 02.4 — Pesan Error -->
+      <p id="gate_err" class="gate__err"></p>
+
+      <!-- 02.5 — Tombol Login -->
+      <button class="btn btn--primary gate__btn" id="gate_btn" onclick="gateLogin()">
+        Login
+      </button>
+
+      <!-- 02.6 — Divider -->
+      <div class="gate__divider">
+        <span>belum terdaftar?</span>
+      </div>
+
+      <!-- 02.7 — Tombol ke Bot Telegram -->
+      <button class="btn btn--ghost gate__btn" onclick="openBotForRegister()">
+        📱 Daftar di Bot Telegram
+      </button>
+
+      <!-- 02.8 — Footer -->
+      <p class="gate__foot">
+        Butuh bantuan? Chat
+        <a href="https://t.me/vurkonnn" target="_blank" rel="noopener">@vurkonnn</a>
+      </p>
+
     </div>
-    <h2 class="gate__title">FAMZ METHOD</h2>
-    <p class="gate__sub">Login menggunakan Telegram</p>
-
-    <!-- Opsi 1: Buka bot -->
-    <button class="btn btn--primary gate__btn" onclick="openBotForLogin()">
-      📱 Buka Bot Telegram
-    </button>
-
-    <div class="gate__divider">
-      <span>atau</span>
-    </div>
-
-    <!-- Opsi 2: Input ID manual -->
-    <input
-      id="gate_input"
-      class="field gate__input"
-      type="text"
-      placeholder="Tempelkan Telegram ID di sini..."
-      maxlength="32"
-      autocomplete="off"
-      onkeydown="if(event.key==='Enter') gateLogin()">
-
-    <button class="btn btn--primary gate__btn" id="gate_btn" onclick="gateLogin()">
-      Lanjutkan
-    </button>
-
-    <p id="gate_err" class="gate__err"></p>
-
-    <p class="gate__foot">
-      Belum punya akses? Chat
-      <a href="https://t.me/vurkonnn" target="_blank">@vurkonnn</a>
-    </p>
   </div>
-</div>
 
-  <!-- TOPBAR -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 03 — TOPBAR
+       ═══════════════════════════════════════════════════════════ -->
   <header class="topbar glass">
     <div class="topbar__inner">
       <div class="brand">
@@ -104,7 +121,9 @@
     </div>
   </header>
 
-  <!-- HERO -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 04 — HERO
+       ═══════════════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="shell">
       <p class="hero__chip">Creator Toolkit</p>
@@ -113,12 +132,14 @@
         <span class="hero__gradient">UPSCALE. ANALYZE.</span>
       </h1>
       <p class="hero__sub">
-        All-in-one creator tools — zero upload, zero install. Semua diproses di device lu.
+        All-in-one creator tools — zero upload, zero install. Semua diproses di device Anda.
       </p>
     </div>
   </section>
 
-  <!-- TABS -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 05 — TABS NAVIGATION
+       ═══════════════════════════════════════════════════════════ -->
   <nav class="tabs" role="tablist">
     <button class="tab is-active" data-tool="patch" onclick="switchTool('patch')" role="tab">
       <span class="tab__icon">
@@ -169,10 +190,12 @@
     </button>
   </nav>
 
-  <!-- MAIN -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 06 — MAIN CONTENT (5 TOOLS)
+       ═══════════════════════════════════════════════════════════ -->
   <main class="shell">
 
-    <!-- TOOL 01 — PATCH -->
+    <!-- 06.1 — TOOL 1: PATCH -->
     <section class="tool is-active" id="tool_patch">
       <div class="card glass">
         <div class="card__head">
@@ -247,7 +270,7 @@
       </div>
     </section>
 
-    <!-- TOOL 02 — ENCODE -->
+    <!-- 06.2 — TOOL 2: ENCODE -->
     <section class="tool" id="tool_encode">
       <div class="card glass">
         <div class="card__head">
@@ -306,7 +329,7 @@
       </div>
     </section>
 
-    <!-- TOOL 03 — UPSCALE -->
+    <!-- 06.3 — TOOL 3: UPSCALE -->
     <section class="tool" id="tool_upscale">
       <div class="card glass">
         <div class="card__head">
@@ -352,7 +375,7 @@
       </div>
     </section>
 
-    <!-- TOOL 04 — ANALYZE -->
+    <!-- 06.4 — TOOL 4: ANALYZE -->
     <section class="tool" id="tool_analyze">
       <div class="card glass">
         <div class="card__head">
@@ -391,7 +414,7 @@
       </div>
     </section>
 
-    <!-- TOOL 05 — QUEUE -->
+    <!-- 06.5 — TOOL 5: QUEUE -->
     <section class="tool" id="tool_queue">
       <div class="card glass">
         <div class="card__head">
@@ -421,7 +444,9 @@
 
   </main>
 
-  <!-- FOOTER -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 07 — FOOTER
+       ═══════════════════════════════════════════════════════════ -->
   <footer class="footer">
     <p class="footer__brand">𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿</p>
     <p class="footer__version">𝘃𝟭.𝟬</p>
@@ -453,7 +478,9 @@
     <p class="footer__copy">© 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣</p>
   </footer>
 
-  <!-- ACCOUNT MODAL -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 08 — ACCOUNT MODAL
+       ═══════════════════════════════════════════════════════════ -->
   <div class="modal" id="account_modal">
     <div class="modal__backdrop" onclick="closeAccountModal()"></div>
     <div class="modal__box glass">
@@ -488,10 +515,14 @@
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 09 — TOAST NOTIFICATION
+       ═══════════════════════════════════════════════════════════ -->
   <div class="toast" id="toast" role="alert" aria-live="polite"></div>
 
-  <!-- SCRIPTS -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 10 — SCRIPTS
+       ═══════════════════════════════════════════════════════════ -->
   <script src="js/core/atoms.js"></script>
   <script src="js/core/patch.js"></script>
   <script src="js/core/encoder.js"></script>
