@@ -57,13 +57,13 @@ function onPickPatch(e) {
    SECTION 04 — FILE TAG
    ───────────────────────────────────────────────────────────── */
 function updateFileTag(file) {
-  const tag = document.getElementById('patch_filetag');
+  const tag  = document.getElementById('patch_filetag');
   const name = document.getElementById('patch_name');
   const size = document.getElementById('patch_size');
 
   if (name) name.textContent = file.name;
   if (size) size.textContent = formatSize(file.size);
-  if (tag) tag.hidden = false;
+  if (tag)  tag.hidden = false;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -79,9 +79,9 @@ function updatePreview(file) {
     URL.revokeObjectURL(vid.src);
   }
 
-  vid.src = URL.createObjectURL(file);
-  vid.muted = false;
-  vid.loop = false;
+  vid.src       = URL.createObjectURL(file);
+  vid.muted     = false;
+  vid.loop      = false;
   vid.playsInline = true;
 
   box.hidden = false;
@@ -93,11 +93,11 @@ function updatePreview(file) {
    SECTION 05.1 — CUSTOM VIDEO CONTROLS
    ───────────────────────────────────────────────────────────── */
 function setupPreviewControls(vid, box) {
-  const playBtn = document.getElementById('patch_play_btn');
-  const muteBtn = document.getElementById('patch_mute_btn');
-  const progressBar = document.getElementById('patch_progress_bar');
+  const playBtn      = document.getElementById('patch_play_btn');
+  const muteBtn      = document.getElementById('patch_mute_btn');
+  const progressBar  = document.getElementById('patch_progress_bar');
   const progressFill = document.getElementById('patch_progress_fill');
-  const timeEl = document.getElementById('patch_time');
+  const timeEl       = document.getElementById('patch_time');
 
   if (!playBtn || !muteBtn || !progressBar) return;
 
@@ -107,7 +107,7 @@ function setupPreviewControls(vid, box) {
 
   function fmtTime(s) {
     if (!s || isNaN(s)) return '0:00';
-    const m = Math.floor(s / 60);
+    const m   = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
     return m + ':' + (sec < 10 ? '0' : '') + sec;
   }
@@ -121,41 +121,41 @@ function setupPreviewControls(vid, box) {
   }
 
   vid.onloadedmetadata = updateProgress;
-  vid.ontimeupdate = updateProgress;
+  vid.ontimeupdate     = updateProgress;
 
   vid.onplay = function () {
     box.classList.add('is-playing');
-    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPlay  = playBtn.querySelector('.icon-play');
     const iconPause = playBtn.querySelector('.icon-pause');
-    if (iconPlay) iconPlay.style.display = 'none';
+    if (iconPlay)  iconPlay.style.display  = 'none';
     if (iconPause) iconPause.style.display = 'block';
   };
 
   vid.onpause = function () {
     box.classList.remove('is-playing');
-    const iconPlay = playBtn.querySelector('.icon-play');
+    const iconPlay  = playBtn.querySelector('.icon-play');
     const iconPause = playBtn.querySelector('.icon-pause');
-    if (iconPlay) iconPlay.style.display = 'block';
+    if (iconPlay)  iconPlay.style.display  = 'block';
     if (iconPause) iconPause.style.display = 'none';
   };
 
   vid.onended = vid.onpause;
 
   vid.onvolumechange = function () {
-    const iconVol = muteBtn.querySelector('.icon-volume');
+    const iconVol  = muteBtn.querySelector('.icon-volume');
     const iconMute = muteBtn.querySelector('.icon-muted');
     if (vid.muted || vid.volume === 0) {
-      if (iconVol) iconVol.style.display = 'none';
+      if (iconVol)  iconVol.style.display  = 'none';
       if (iconMute) iconMute.style.display = 'block';
     } else {
-      if (iconVol) iconVol.style.display = 'block';
+      if (iconVol)  iconVol.style.display  = 'block';
       if (iconMute) iconMute.style.display = 'none';
     }
   };
 
   progressBar.onclick = function (e) {
     const rect = progressBar.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
+    const pct  = (e.clientX - rect.left) / rect.width;
     if (vid.duration) vid.currentTime = pct * vid.duration;
   };
 }
@@ -210,11 +210,11 @@ function hideProgress() {
 }
 
 function setPatchProgress(pct, label) {
-  const fill = document.getElementById('patch_fill');
+  const fill  = document.getElementById('patch_fill');
   const pctEl = document.getElementById('patch_pct');
-  const lbl = document.getElementById('patch_label');
+  const lbl   = document.getElementById('patch_label');
 
-  if (fill) fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  if (fill)  fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
   if (pctEl) pctEl.textContent = Math.round(pct) + '%';
   if (lbl && label) lbl.textContent = label;
 }
@@ -226,7 +226,8 @@ function patchLog(msg, kind) {
   const line = document.createElement('div');
   line.textContent = '→ ' + msg;
   if (kind === 'error') line.classList.add('is-error');
-  if (kind === 'done') line.classList.add('is-done');
+  if (kind === 'done')  line.classList.add('is-done');
+  if (kind === 'warn')  line.classList.add('is-warn');
 
   log.appendChild(line);
 
@@ -243,15 +244,15 @@ function showReport(name, elapsed, before, after) {
   const box = document.getElementById('patch_report');
   if (!box) return;
 
-  const elName = document.getElementById('patch_report_name');
-  const elTime = document.getElementById('patch_report_time');
+  const elName   = document.getElementById('patch_report_name');
+  const elTime   = document.getElementById('patch_report_time');
   const elBefore = document.getElementById('patch_report_before');
-  const elAfter = document.getElementById('patch_report_after');
+  const elAfter  = document.getElementById('patch_report_after');
 
-  if (elName) elName.textContent = name;
-  if (elTime) elTime.textContent = elapsed.toFixed(2) + 's';
+  if (elName)   elName.textContent   = name;
+  if (elTime)   elTime.textContent   = elapsed.toFixed(2) + 's';
   if (elBefore) elBefore.textContent = formatSize(before);
-  if (elAfter) elAfter.textContent = formatSize(after);
+  if (elAfter)  elAfter.textContent  = formatSize(after);
 
   box.hidden = false;
 }
@@ -311,11 +312,18 @@ async function runPatch() {
       throw new Error(result.validation.reason);
     }
 
+    /* Warn kalau metadata original gagal di-merge */
+    if (result.udtaMerged === false) {
+      patchLog('Metadata original gak bisa di-merge — pakai signature FAMZ', 'warn');
+    } else if (result.udtaMerged === true) {
+      patchLog('Metadata original berhasil di-merge', 'done');
+    }
+
     setPatchProgress(85, 'Building output');
     patchLog('Preparing download');
 
     const filename = buildFilename(_patchFile.name, 'patch_famz', 'mp4');
-    const blob = new Blob([result.output], { type: 'video/mp4' });
+    const blob     = new Blob([result.output], { type: 'video/mp4' });
     downloadBlob(blob, filename);
 
     setPatchProgress(100, 'Done');
@@ -350,7 +358,7 @@ function initPatchDragDrop() {
       e.preventDefault();
       e.stopPropagation();
       drop.style.borderColor = 'var(--accent)';
-      drop.style.background = 'rgba(10, 132, 255, 0.08)';
+      drop.style.background  = 'rgba(10, 132, 255, 0.08)';
     });
   });
 
@@ -359,7 +367,7 @@ function initPatchDragDrop() {
       e.preventDefault();
       e.stopPropagation();
       drop.style.borderColor = '';
-      drop.style.background = '';
+      drop.style.background  = '';
     });
   });
 
