@@ -11,16 +11,16 @@
    SECTION 01 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const ANALYZER_CONFIG = {
-  cacheTTL: 24 * 60 * 60 * 1000, // 24 jam
-  cacheKey: 'famz_analyzer_cache',
+  cacheTTL:        24 * 60 * 60 * 1000,  /* 24 jam */
+  cacheKey:        'famz_analyzer_cache',
   maxCacheEntries: 30,
-  requestTimeout: 8000
+  requestTimeout:  8000
 };
 
 const PLATFORM_PATTERNS = {
   tiktok:    /(?:tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com)/i,
   instagram: /(?:instagram\.com|instagr\.am)/i,
-  youtube:   /(?:youtube\.com|youtu\.be|youtube\.com\/shorts)/i,
+  youtube:   /(?:youtube\.com|youtu\.be)/i,
   twitter:   /(?:twitter\.com|x\.com)/i
 };
 
@@ -29,11 +29,11 @@ const PLATFORM_PATTERNS = {
    ───────────────────────────────────────────────────────────── */
 async function analyzeUrl(url, onProgress, onLog) {
   onProgress = onProgress || function () {};
-  onLog = onLog || function () {};
+  onLog      = onLog      || function () {};
 
   const t0 = performance.now();
 
-  /* STEP 1 — Validate URL */
+  /* ─── STEP 1: Validate URL ─── */
   const platform = detectPlatform(url);
   if (!platform) {
     throw new Error('URL gak dikenali. Support: TikTok, Instagram, YouTube, Twitter');
@@ -42,37 +42,43 @@ async function analyzeUrl(url, onProgress, onLog) {
   onProgress(5, 'Detecting platform');
   onLog('Platform: ' + platform);
 
-  /* STEP 2 — Check cache */
-  const cached = getCache(url);
+  /* ─── STEP 2: Normalize URL (buang tracking param) ─── */
+  const cleanUrl = normalizeUrl(url);
+  if (cleanUrl !== url) {
+    onLog('URL normalized');
+  }
+
+  /* ─── STEP 3: Check cache ─── */
+  const cached = getCache(cleanUrl);
   if (cached) {
     onProgress(100, 'From cache');
     onLog('Loaded from cache', 'done');
     return cached;
   }
 
-  /* STEP 3 — Fetch metadata */
+  /* ─── STEP 4: Fetch metadata ─── */
   onProgress(15, 'Fetching metadata');
   onLog('Requesting API...');
 
   let data;
 
   if (platform === 'tiktok') {
-    data = await fetchTikTok(url, onLog);
+    data = await fetchTikTok(cleanUrl, onLog);
   } else if (platform === 'instagram') {
-    data = await fetchInstagram(url, onLog);
+    data = await fetchInstagram(cleanUrl, onLog);
   } else if (platform === 'youtube') {
-    data = await fetchYouTube(url, onLog);
+    data = await fetchYouTube(cleanUrl, onLog);
   } else if (platform === 'twitter') {
-    data = await fetchTwitter(url, onLog);
+    data = await fetchTwitter(cleanUrl, onLog);
   }
 
   onProgress(80, 'Parsing result');
 
-  /* STEP 4 — Build result */
+  /* ─── STEP 5: Build result ─── */
   const result = buildResult(platform, url, data);
 
-  /* STEP 5 — Cache */
-  setCache(url, result);
+  /* ─── STEP 6: Cache (pakai cleanUrl) ─── */
+  setCache(cleanUrl, result);
 
   onProgress(100, 'Done');
 
@@ -95,7 +101,35 @@ function detectPlatform(url) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — TIKTOK FETCHER (multi-fallback)
+   SECTION 04 — URL NORMALIZER (buang tracking param)
+   ───────────────────────────────────────────────────────────── */
+const TRACKING_PARAMS = [
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
+  'fbclid', 'gclid', 'igshid', 'igsh',
+  '_t', 'is_from_webapp', 'sender_device', 'web_id', 'share_app_id',
+  'refer', 'referer', 'ref', 'source'
+];
+
+function normalizeUrl(url) {
+  try {
+    const u = new URL(url);
+
+    /* Buang tracking params */
+    for (let i = 0; i < TRACKING_PARAMS.length; i++) {
+      u.searchParams.delete(TRACKING_PARAMS[i]);
+    }
+
+    /* Buang hash */
+    u.hash = '';
+
+    return u.toString();
+  } catch (e) {
+    return url;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECTION 05 — TIKTOK FETCHER (multi-fallback)
    ───────────────────────────────────────────────────────────── */
 async function fetchTikTok(url, onLog) {
   const enc = encodeURIComponent(url);
@@ -117,24 +151,28 @@ async function fetchTikTok(url, onLog) {
         const d = await res.json();
         if (!d.video) throw new Error('no data');
         return {
-          title: d.title,
+          title:    d.title,
           duration: d.duration,
-          width: d.video.width,
-          height: d.video.height,
-          hdplay: d.video.noWatermark,
-          play: d.video.watermark,
-          cover: d.video.cover,
-          author: { nickname: d.author ? d.author.name : null, unique_id: d.author ? d.author.username : null }
+          width:    d.video.width,
+          height:   d.video.height,
+          hdplay:   d.video.noWatermark,
+          play:     d.video.watermark,
+          cover:    d.video.cover,
+          author: {
+            nickname:  d.author ? d.author.name     : null,
+            unique_id: d.author ? d.author.username : null
+          }
         };
       }
     },
     {
       name: 'TikWM via AllOrigins',
       fn: async function () {
-        const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://www.tikwm.com/api/?url=' + enc + '&hd=1');
+        const proxy = 'https://api.allorigins.win/get?url=' +
+          encodeURIComponent('https://www.tikwm.com/api/?url=' + enc + '&hd=1');
         const res = await fetchT(proxy);
-        const p = await res.json();
-        const d = JSON.parse(p.contents);
+        const p   = await res.json();
+        const d   = JSON.parse(p.contents);
         if (d.code !== 0 || !d.data) throw new Error('no data');
         return d.data;
       }
@@ -154,11 +192,11 @@ async function fetchTikTok(url, onLog) {
         const res = await fetchT('https://www.tiktok.com/oembed?url=' + enc);
         const d = await res.json();
         return {
-          title: d.title,
+          title:  d.title,
           author: { nickname: d.author_name },
-          cover: d.thumbnail_url,
+          cover:  d.thumbnail_url,
           hdplay: null,
-          width: 0,
+          width:  0,
           height: 0
         };
       }
@@ -184,7 +222,7 @@ async function fetchTikTok(url, onLog) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 05 — INSTAGRAM FETCHER
+   SECTION 06 — INSTAGRAM FETCHER
    ───────────────────────────────────────────────────────────── */
 async function fetchInstagram(url, onLog) {
   const enc = encodeURIComponent(url);
@@ -205,9 +243,9 @@ async function fetchInstagram(url, onLog) {
         const res = await fetchT('https://api.instagram.com/oembed?url=' + enc);
         const d = await res.json();
         return {
-          title: d.title,
+          title:  d.title,
           author: { nickname: d.author_name },
-          cover: d.thumbnail_url,
+          cover:  d.thumbnail_url,
           hdplay: null
         };
       }
@@ -229,7 +267,7 @@ async function fetchInstagram(url, onLog) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 06 — YOUTUBE FETCHER
+   SECTION 07 — YOUTUBE FETCHER
    ───────────────────────────────────────────────────────────── */
 async function fetchYouTube(url, onLog) {
   const enc = encodeURIComponent(url);
@@ -241,9 +279,9 @@ async function fetchYouTube(url, onLog) {
         const res = await fetchT('https://www.youtube.com/oembed?url=' + enc + '&format=json');
         const d = await res.json();
         return {
-          title: d.title,
+          title:  d.title,
           author: { nickname: d.author_name },
-          cover: d.thumbnail_url,
+          cover:  d.thumbnail_url,
           hdplay: null
         };
       }
@@ -265,7 +303,7 @@ async function fetchYouTube(url, onLog) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 07 — TWITTER FETCHER
+   SECTION 08 — TWITTER FETCHER
    ───────────────────────────────────────────────────────────── */
 async function fetchTwitter(url, onLog) {
   const enc = encodeURIComponent(url);
@@ -277,9 +315,9 @@ async function fetchTwitter(url, onLog) {
         const res = await fetchT('https://publish.twitter.com/oembed?url=' + enc);
         const d = await res.json();
         return {
-          title: d.author_name,
+          title:  d.author_name,
           author: { nickname: d.author_name },
-          cover: null,
+          cover:  null,
           hdplay: null
         };
       }
@@ -301,10 +339,10 @@ async function fetchTwitter(url, onLog) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 08 — BUILD RESULT
+   SECTION 09 — BUILD RESULT
    ───────────────────────────────────────────────────────────── */
 function buildResult(platform, url, data) {
-  const w = parseInt(data.width, 10) || 0;
+  const w = parseInt(data.width,  10) || 0;
   const h = parseInt(data.height, 10) || 0;
 
   let hdRetained = false;
@@ -316,27 +354,26 @@ function buildResult(platform, url, data) {
     hdRetained = true;
   }
 
-  // Fallback: kalau platform YT/IG tanpa data width/height
-  // → hdRetained: null (unknown), bukan false
+  /* Kalau platform gak kasih data resolusi → unknown */
   const isUnknown = (w === 0 && h === 0 && !data.hdplay);
 
   return {
-    platform: platform,
-    url: url,
+    platform:   platform,
+    url:        url,
     hdRetained: isUnknown ? null : hdRetained,
     resolution: (w && h) ? (w + '×' + h) : '—',
-    bitrate: estimateBitrate(data),
-    fileSize: data.size || 0,
-    hdSize: data.hd_size || 0,
-    duration: data.duration || 0,
-    title: data.title || '(no title)',
-    author: data.author ? (data.author.nickname || data.author.unique_id) : '—',
-    cover: normalizeCover(data.cover || data.origin_cover || null),
+    bitrate:    estimateBitrate(data),
+    fileSize:   data.size    || 0,
+    hdSize:     data.hd_size || 0,
+    duration:   data.duration || 0,
+    title:      data.title || '(no title)',
+    author:     data.author ? (data.author.nickname || data.author.unique_id) : '—',
+    cover:      normalizeCover(data.cover || data.origin_cover || null),
     stats: {
-      likes: data.digg_count || 0,
-      views: data.play_count || 0,
+      likes:    data.digg_count    || 0,
+      views:    data.play_count    || 0,
       comments: data.comment_count || 0,
-      shares: data.share_count || 0
+      shares:   data.share_count   || 0
     }
   };
 }
@@ -358,12 +395,12 @@ function normalizeCover(url) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 09 — CACHE
+   SECTION 10 — CACHE (pakai normalized URL)
    ───────────────────────────────────────────────────────────── */
 function getCache(url) {
   try {
     const cache = JSON.parse(localStorage.getItem(ANALYZER_CONFIG.cacheKey) || '{}');
-    const rec = cache[url];
+    const rec   = cache[url];
     if (rec && Date.now() - rec.ts < ANALYZER_CONFIG.cacheTTL) {
       return rec.data;
     }
@@ -376,6 +413,7 @@ function setCache(url, data) {
     const cache = JSON.parse(localStorage.getItem(ANALYZER_CONFIG.cacheKey) || '{}');
     cache[url] = { ts: Date.now(), data: data };
 
+    /* Evict kalau kepenuhan */
     const keys = Object.keys(cache);
     if (keys.length > ANALYZER_CONFIG.maxCacheEntries) {
       keys.sort(function (a, b) { return cache[a].ts - cache[b].ts; });
@@ -396,22 +434,34 @@ function clearCache() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — HELPERS
+   SECTION 11 — HELPERS
    ───────────────────────────────────────────────────────────── */
+
+/* 11.1 — Fetch with timeout + proper abort handling */
 function fetchT(url, timeout) {
-  const ms = timeout || ANALYZER_CONFIG.requestTimeout;
+  const ms   = timeout || ANALYZER_CONFIG.requestTimeout;
   const ctrl = new AbortController();
-  const timer = setTimeout(function () { ctrl.abort(); }, ms);
+  let timedOut = false;
+
+  const timer = setTimeout(function () {
+    timedOut = true;
+    ctrl.abort();
+  }, ms);
 
   return fetch(url, {
-    signal: ctrl.signal,
+    signal:  ctrl.signal,
     headers: { 'Accept': 'application/json' }
+  }).catch(function (err) {
+    if (timedOut || err.name === 'AbortError') {
+      throw new Error('Request timeout (' + ms + 'ms)');
+    }
+    throw err;
   }).finally(function () {
     clearTimeout(timer);
   });
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 11 — EXPORT
+   SECTION 12 — EXPORT
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] analyzer.js loaded');
