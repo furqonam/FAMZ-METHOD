@@ -53,15 +53,28 @@
     <h2 class="gate__title">FAMZ METHOD</h2>
     <p class="gate__sub">Login menggunakan Telegram</p>
 
+    <!-- Opsi 1: Buka bot -->
     <button class="btn btn--primary gate__btn" onclick="openBotForLogin()">
-      📱 Login via Telegram
+      📱 Buka Bot Telegram
     </button>
 
-    <p class="gate__hint">
-      Bot akan terbuka otomatis.<br>
-      Ketik <b>/register</b> di bot,<br>
-      lalu klik tombol yang muncul.
-    </p>
+    <div class="gate__divider">
+      <span>atau</span>
+    </div>
+
+    <!-- Opsi 2: Input ID manual -->
+    <input
+      id="gate_input"
+      class="field gate__input"
+      type="text"
+      placeholder="Tempelkan Telegram ID di sini..."
+      maxlength="32"
+      autocomplete="off"
+      onkeydown="if(event.key==='Enter') gateLogin()">
+
+    <button class="btn btn--primary gate__btn" id="gate_btn" onclick="gateLogin()">
+      Lanjutkan
+    </button>
 
     <p id="gate_err" class="gate__err"></p>
 
