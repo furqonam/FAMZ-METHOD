@@ -131,6 +131,10 @@ function queueGetState() {
    SECTION 07 — PROCESS QUEUE
    ───────────────────────────────────────────────────────────── */
 async function queueProcess(options, callbacks) {
+  /* FIX: Normalize options di awal */
+  options   = options   || {};
+  callbacks = callbacks || {};
+
   if (_queue.running) {
     throw new Error('Queue sedang berjalan');
   }
@@ -140,7 +144,7 @@ async function queueProcess(options, callbacks) {
   }
 
   /* 07.1 — Resolve processor (dengan guard) */
-  const processor = options && options.processor
+  const processor = options.processor
     ? options.processor
     : (typeof patchMP4 === 'function' ? patchMP4 : null);
 
@@ -149,8 +153,6 @@ async function queueProcess(options, callbacks) {
   }
 
   _queue.running = true;
-  options   = options   || {};
-  callbacks = callbacks || {};
 
   const onItemStart    = callbacks.onItemStart    || function () {};
   const onItemProgress = callbacks.onItemProgress || function () {};
@@ -246,7 +248,7 @@ function queueGetAutoDownload() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — DOWNLOAD ALL (FIXED: skip yang udah ke-download)
+   SECTION 10 — DOWNLOAD ALL (skip yang udah ke-download)
    ═══════════════════════════════════════════════════════════════
    Kalau autoDownload aktif → file udah ke-download otomatis.
    Fungsi ini cuma buat download yang BELUM ke-download.
