@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝙫𝟭.𝟬
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/ui/app.js
    App Orchestration + Gate + Account + Badges + Support
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
@@ -56,7 +56,7 @@ function closeGate() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   02.5 — Tampilkan Error
+   02.5 — Tampilkan Error di Gate
    ───────────────────────────────────────────────────────────── */
 function showGateErr(msg) {
   const el = document.getElementById('gate_err');
@@ -67,7 +67,7 @@ function showGateErr(msg) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   02.6 — Bersihkan Error
+   02.6 — Bersihkan Error Gate
    ───────────────────────────────────────────────────────────── */
 function clearGateErr() {
   const el = document.getElementById('gate_err');
@@ -84,13 +84,14 @@ async function gateLogin() {
 
   clearGateErr();
 
+  /* 02.7.1 — Validasi input */
   if (!val || val.length < 3) {
     showGateErr('Masukkan Telegram ID terlebih dahulu.');
     return;
   }
 
   if (btn) {
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Memeriksa...';
   }
 
@@ -109,7 +110,7 @@ async function gateLogin() {
     showGateErr(err.message || 'Login gagal.');
 
     if (btn) {
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Login';
     }
   }
@@ -137,10 +138,10 @@ function updateTierBadge() {
   if (session && session.connected) {
     const tier = session.tier || 'free';
     el.textContent = tier.toUpperCase();
-    el.className = 'tier-badge tier-badge--' + tier;
+    el.className   = 'tier-badge tier-badge--' + tier;
   } else {
     el.textContent = 'LOGIN';
-    el.className = 'tier-badge tier-badge--free';
+    el.className   = 'tier-badge tier-badge--free';
   }
 }
 
@@ -148,13 +149,14 @@ function updateTierBadge() {
    SECTION 04 — QUOTA MODAL
    ═══════════════════════════════════════════════════════════════ */
 function showQuotaModal(message, reason) {
+  /* Hapus modal lama kalau ada */
   const old = document.getElementById('famz_quota_modal');
   if (old) old.remove();
 
   const showVip = (reason === 'quota_exceeded' || !reason);
 
   const modal = document.createElement('div');
-  modal.id = 'famz_quota_modal';
+  modal.id        = 'famz_quota_modal';
   modal.className = 'modal';
   modal.innerHTML = [
     '<div class="modal__backdrop"></div>',
@@ -174,17 +176,21 @@ function showQuotaModal(message, reason) {
 
   requestAnimationFrame(function () { modal.classList.add('is-show'); });
 
+  /* Close handler */
   const close = function () {
     modal.classList.remove('is-show');
     setTimeout(function () { modal.remove(); }, 300);
   };
 
+  /* Backdrop click */
   const backdrop = modal.querySelector('.modal__backdrop');
   if (backdrop) backdrop.addEventListener('click', close);
 
+  /* Close button */
   const closeBtn = document.getElementById('famz_quota_close');
   if (closeBtn) closeBtn.addEventListener('click', close);
 
+  /* VIP button */
   const vipBtn = document.getElementById('famz_quota_vip');
   if (vipBtn) {
     vipBtn.addEventListener('click', function () {
@@ -199,7 +205,7 @@ function showQuotaModal(message, reason) {
    ═══════════════════════════════════════════════════════════════ */
 async function checkUrlLogin() {
   const urlParams = new URLSearchParams(window.location.search);
-  const tgId = urlParams.get('tg');
+  const tgId      = urlParams.get('tg');
 
   if (!tgId) return false;
 
@@ -212,6 +218,7 @@ async function checkUrlLogin() {
     const session = sessionGet();
     showToast('Selamat datang — ' + session.tier.toUpperCase(), 'success');
 
+    /* Bersihin URL */
     window.history.replaceState({}, '', window.location.pathname);
 
     return true;
@@ -223,37 +230,35 @@ async function checkUrlLogin() {
 
 /* ═══════════════════════════════════════════════════════════════
    SECTION 06 — QUOTA BADGES
-   ═══════════════════════════════════════════════════════════════ */
-function quotaRemaining(feature) {
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-  if (!session || !session.connected) return 0;
-
-  const limits = {
-    free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
-    basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
-    pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
-  };
-
-  const table = limits[session.tier] || limits.free;
-  return table[feature] === -1 ? Infinity : table[feature];
-}
-
+   ═══════════════════════════════════════════════════════════════
+   CATATAN: quotaRemaining() TIDAK didefinisikan di sini.
+   Pakai quotaRemaining() dari session.js (SECTION 09.2).
+   ───────────────────────────────────────────────────────────── */
 function updateQuotaBadges() {
+  /* Cek fungsi tersedia */
+  if (typeof quotaRemaining !== 'function') {
+    console.warn('[FAMZ] quotaRemaining not available');
+    return;
+  }
+
   const features = ['patch', 'encode', 'upscale', 'analyze'];
-  const prefix = 'famz_quota_';
+  const prefix   = 'famz_quota_';
 
   for (let i = 0; i < features.length; i++) {
-    const f = features[i];
+    const f  = features[i];
     const el = document.getElementById(prefix + f);
     if (!el) continue;
 
     const remaining = quotaRemaining(f);
+
     if (remaining === Infinity) {
       el.textContent = '∞';
       el.classList.add('is-unlimited');
+      el.classList.remove('is-empty');
     } else {
       el.textContent = remaining;
       el.classList.remove('is-unlimited');
+
       if (remaining === 0) el.classList.add('is-empty');
       else el.classList.remove('is-empty');
     }
@@ -262,18 +267,20 @@ function updateQuotaBadges() {
 
 function initAppBadge() {
   const badge = document.querySelector('.badge');
-  if (badge && !badge.textContent.trim()) badge.textContent = 'v1.0';
+  if (badge && !badge.textContent.trim()) {
+    badge.textContent = 'v1.0';
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    SECTION 07 — TOOL INIT
    ═══════════════════════════════════════════════════════════════ */
 function initAllTools() {
-  try { if (typeof initPatcher  === 'function') initPatcher();  } catch (e) {}
-  try { if (typeof initEncoder  === 'function') initEncoder();  } catch (e) {}
-  try { if (typeof initUpscale  === 'function') initUpscale();  } catch (e) {}
-  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) {}
-  try { if (typeof initQueue    === 'function') initQueue();    } catch (e) {}
+  try { if (typeof initPatcher  === 'function') initPatcher();  } catch (e) { console.warn('[init] patcher',  e); }
+  try { if (typeof initEncoder  === 'function') initEncoder();  } catch (e) { console.warn('[init] encoder',  e); }
+  try { if (typeof initUpscale  === 'function') initUpscale();  } catch (e) { console.warn('[init] upscale',  e); }
+  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) { console.warn('[init] analyzer', e); }
+  try { if (typeof initQueue    === 'function') initQueue();    } catch (e) { console.warn('[init] queue',    e); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -302,10 +309,14 @@ async function registerServiceWorker() {
 
 /* ═══════════════════════════════════════════════════════════════
    SECTION 09 — HANDLERS
-   ═══════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════
+   FIX: visibility handler sebelumnya kebalik.
+   Sekarang: reset + refresh badge saat tab KEMBALI terlihat.
+   ───────────────────────────────────────────────────────────── */
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) {
+    /* Saat tab kembali terlihat (dari hidden → visible) */
+    if (!document.hidden) {
       if (typeof autoResetQuota    === 'function') autoResetQuota();
       if (typeof updateQuotaBadges === 'function') updateQuotaBadges();
       if (typeof updateTierBadge   === 'function') updateTierBadge();
@@ -328,7 +339,7 @@ function initErrorBoundary() {
       const errors = JSON.parse(localStorage.getItem('famz_errors') || '[]');
       errors.push({
         msg: 'Promise: ' + (e.reason ? e.reason.message : 'unknown'),
-        ts: Date.now(),
+        ts:  Date.now(),
         url: location.href
       });
       if (errors.length > 30) errors.shift();
@@ -343,31 +354,40 @@ function initErrorBoundary() {
 async function initApp() {
   console.log('[FAMZ] Starting app...');
 
+  /* 10.1 — Init session */
   try {
     if (typeof sessionInit === 'function') await sessionInit();
   } catch (e) {
     console.warn('[init] session failed', e);
   }
 
+  /* 10.2 — Auto-login dari URL (?tg=xxx) */
   const autoLogged = await checkUrlLogin();
   if (!autoLogged) {
     const session = typeof sessionGet === 'function' ? sessionGet() : null;
     if (!session || !session.connected) openGate();
   }
 
+  /* 10.3 — Init tabs */
   try { if (typeof initTabs === 'function') initTabs(); } catch (e) {}
+
+  /* 10.4 — Init semua tool */
   initAllTools();
 
+  /* 10.5 — Update UI badges */
   updateQuotaBadges();
   initAppBadge();
   updateTierBadge();
 
+  /* 10.6 — Load account */
   try { if (typeof loadAccount === 'function') loadAccount(); } catch (e) {}
 
+  /* 10.7 — Service Worker + handlers */
   registerServiceWorker();
   initVisibilityHandler();
   initErrorBoundary();
 
+  /* 10.8 — Welcome toast (delay biar gak numpuk) */
   setTimeout(function () {
     const s = typeof sessionGet === 'function' ? sessionGet() : null;
     if (s && s.connected) {
