@@ -55,17 +55,22 @@ function patchMP4(buffer, opts) {
   /* ─── STEP C: Signature udta (merge, bukan replace) ─── */
   const sigUdta      = buildSignatureUdta();
   const existingUdta = pickChild(moov, 'udta');
+  let udtaMerged     = true;   /* flag: apakah merge sukses */
 
   if (existingUdta) {
-    const merged = mergeUdta(arr, existingUdta, sigUdta);
-    if (merged) {
-      repl.set(existingUdta, merged);
+    const mergeResult = mergeUdta(arr, existingUdta, sigUdta);
+
+    if (mergeResult && mergeResult.bytes) {
+      repl.set(existingUdta, mergeResult.bytes);
+      udtaMerged = mergeResult.merged;
     } else {
       /* Fallback: replace kalau merge gagal */
       repl.set(existingUdta, sigUdta);
+      udtaMerged = false;
     }
   } else {
     repl.set('__appendUdta__', sigUdta);
+    udtaMerged = false;   /* gak ada yang di-merge */
   }
 
   /* ─── STEP D: Collect stco ─── */
@@ -112,7 +117,8 @@ function patchMP4(buffer, opts) {
     before:     before,
     after:      output.length,
     validation: validation,
-    elapsed:    elapsed
+    elapsed:    elapsed,
+    udtaMerged: udtaMerged   /* ← expose flag ke UI */
   };
 }
 
@@ -331,37 +337,37 @@ function buildHdlr() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MERGE UDTA (FIXED — sekarang merge, bukan replace)
+   SECTION 12 — MERGE UDTA (return { bytes, merged } )
    ═══════════════════════════════════════════════════════════════
-   Strategi:
-   1. Kalau udta lama gak punya meta → append signature
-   2. Kalau udta lama punya meta → append ilst signature ke dalam
-   3. Kalau parsing gagal → replace total (safety)
+   Return value:
+   - { bytes: Uint8Array, merged: true }  → merge sukses
+   - { bytes: Uint8Array, merged: false } → fallback replace
+   - null → gagal total
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
   try {
     const oldBody = arr.slice(oldUdta.contentStart, oldUdta.end);
     const oldMeta = findChildInBytes(oldBody, 'meta');
 
-    /* ─── Kalau gak ada meta lama → append signature ─── */
+    /* ─── Kasus 1: gak ada meta lama → append signature ─── */
     if (oldMeta < 0) {
-      return buildAtom('udta', mergeBytes([oldBody, sigUdta.slice(8)]));
+      const bytes = buildAtom('udta', mergeBytes([oldBody, sigUdta.slice(8)]));
+      return { bytes: bytes, merged: false };   /* gak merge, cuma append */
     }
 
-    /* ─── Ada meta lama → merge ilst ─── */
+    /* ─── Kasus 2: ada meta lama → merge ilst ─── */
     const newUdtaBody = sigUdta.slice(8);
     const newMeta     = findChildInBytes(newUdtaBody, 'meta');
 
     if (newMeta < 0) {
-      return sigUdta;
+      return { bytes: sigUdta, merged: false };
     }
 
-    /* Ambil ilst dari signature */
     const newMetaBody = newUdtaBody.slice(newMeta + 8);
     const newIlst     = findChildInBytes(newMetaBody, 'ilst');
 
     if (newIlst < 0) {
-      return sigUdta;
+      return { bytes: sigUdta, merged: false };
     }
 
     /* Gabung: old meta body + new ilst */
@@ -372,14 +378,14 @@ function mergeUdta(arr, oldUdta, sigUdta) {
     ]);
 
     const mergedMeta = buildAtom('meta', mergedMetaBody);
+    const bytes      = buildAtom('udta', mergedMeta);
 
-    /* Wrap meta ke udta baru */
-    return buildAtom('udta', mergedMeta);
+    return { bytes: bytes, merged: true };
 
   } catch (e) {
-    /* Fallback: replace total kalau parsing gagal */
+    /* ─── Kasus 3: parsing gagal → replace total ─── */
     console.warn('[patch] mergeUdta fallback to replace:', e.message);
-    return sigUdta;
+    return { bytes: sigUdta, merged: false };
   }
 }
 
