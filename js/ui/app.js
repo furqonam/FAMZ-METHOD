@@ -17,7 +17,7 @@ function esc(text) {
 }
 
 function openSupport() {
-  window.open('https://t.me/vurkonnn', '_blank', 'noopener,noreferrer');
+  window.open('https://sociabuzz.com/famzid/support', '_blank', 'noopener,noreferrer');
 }
 
 /* ═══════════════════════════════════════════════════════════════
