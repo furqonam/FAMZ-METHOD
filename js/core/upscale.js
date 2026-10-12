@@ -11,99 +11,146 @@
    SECTION 01 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const UPSCALE_CONFIG = {
-  modelPath: 'https://cdn.jsdelivr.net/gh/vurkonnn/famz-assets@main/models/realesrgan-x2.onnx',
-  modelFallback: 'https://huggingface.co/vurkonnn/famz-models/resolve/main/realesrgan-x2.onnx',
+  /* Model URLs — multi-fallback */
+  modelPaths: [
+    'https://cdn.jsdelivr.net/gh/vurkonnn/famz-assets@main/models/realesrgan-x2.onnx',
+    'https://huggingface.co/vurkonnn/famz-models/resolve/main/realesrgan-x2.onnx',
+    'https://huggingface.co/Xenova/realesrgan-x2/resolve/main/onnx/model.onnx'
+  ],
+
+  /* ONNX Runtime CDN */
+  ortCDN: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort.min.js',
+
+  /* Limits */
   maxInputSize: 1024,
   scale: 2,
   tileSize: 256,
-  useTiling: true
+  useTiling: true,
+
+  /* Timeout untuk load model */
+  modelTimeout: 60000
 };
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — MODULE STATE
    ───────────────────────────────────────────────────────────── */
-let _ortInstance = null;
-let _session = null;
+let _ortInstance   = null;
+let _ortLoading    = null;
+let _session       = null;
 let _sessionLoading = null;
-let _useWebGPU = false;
+let _useWebGPU     = false;
 let _currentProvider = 'wasm';
+let _loadedModelPath = null;
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 03 — ONNX LOADER
+   SECTION 03 — ONNX LOADER (with race condition guard)
    ───────────────────────────────────────────────────────────── */
 async function loadONNX() {
+  /* Kalau udah loaded → return langsung */
   if (_ortInstance) return _ortInstance;
-  if (_sessionLoading) return _sessionLoading;
 
-  _sessionLoading = (async function () {
-    // Load ONNX Runtime
-    await loadScript('https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/ort.min.js');
+  /* Kalau lagi loading → tungguin yang lagi jalan */
+  if (_ortLoading) return _ortLoading;
 
-    const ort = window.ort;
-    if (!ort) throw new Error('ONNX Runtime gagal load');
-
-    // Configure
-    ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 4);
-    ort.env.wasm.simd = true;
-    ort.env.wasm.proxy = false;
-    ort.env.logLevel = 'error';
-
-    // Try WebGPU provider first
+  _ortLoading = (async function () {
     try {
-      if (navigator.gpu) {
-        const adapter = await navigator.gpu.requestAdapter();
-        if (adapter) {
-          _useWebGPU = true;
-        }
-      }
-    } catch (e) {
-      _useWebGPU = false;
-    }
+      await loadScriptGlobal(UPSCALE_CONFIG.ortCDN);
 
-    _ortInstance = ort;
-    return ort;
+      const ort = window.ort;
+      if (!ort) throw new Error('ONNX Runtime gagal load');
+
+      /* Configure */
+      ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 4);
+      ort.env.wasm.simd       = true;
+      ort.env.wasm.proxy      = false;
+      ort.env.logLevel        = 'error';
+
+      /* Try WebGPU */
+      try {
+        if (navigator.gpu) {
+          const adapter = await navigator.gpu.requestAdapter();
+          if (adapter) {
+            _useWebGPU = true;
+          }
+        }
+      } catch (e) {
+        _useWebGPU = false;
+      }
+
+      _ortInstance = ort;
+      return ort;
+
+    } catch (err) {
+      /* Reset biar bisa retry */
+      _ortLoading = null;
+      throw err;
+    }
   })();
 
-  return _sessionLoading;
+  return _ortLoading;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 04 — SESSION LOADER
+   SECTION 04 — SESSION LOADER (multi model fallback)
    ───────────────────────────────────────────────────────────── */
 async function loadSession(onLog) {
   if (_session) return _session;
+  if (_sessionLoading) return _sessionLoading;
 
-  const ort = await loadONNX();
+  _sessionLoading = (async function () {
+    const ort = await loadONNX();
 
-  const providers = _useWebGPU
-    ? ['webgpu', 'wasm']
-    : ['wasm'];
+    const providers = _useWebGPU
+      ? ['webgpu', 'wasm']
+      : ['wasm'];
 
-  onLog('Loading model...');
-  onLog('Provider: ' + providers.join(' → '));
+    onLog('Loading model...');
+    onLog('Provider: ' + providers.join(' → '));
+
+    let lastError = null;
+
+    /* Coba tiap model path */
+    for (let i = 0; i < UPSCALE_CONFIG.modelPaths.length; i++) {
+      const modelPath = UPSCALE_CONFIG.modelPaths[i];
+
+      try {
+        onLog('Attempt ' + (i + 1) + '/' + UPSCALE_CONFIG.modelPaths.length + ': ' + shortenUrl(modelPath));
+
+        const sessionPromise = ort.InferenceSession.create(modelPath, {
+          executionProviders: providers,
+          graphOptimizationLevel: 'all'
+        });
+
+        /* Wrap dengan timeout */
+        const session = await withTimeout(
+          sessionPromise,
+          UPSCALE_CONFIG.modelTimeout,
+          'Model load timeout'
+        );
+
+        _session           = session;
+        _currentProvider   = _useWebGPU ? 'webgpu' : 'wasm';
+        _loadedModelPath   = modelPath;
+
+        onLog('Session ready: ' + _currentProvider);
+        return session;
+
+      } catch (err) {
+        lastError = err;
+        onLog('Model ' + (i + 1) + ' failed: ' + err.message, 'error');
+      }
+    }
+
+    /* Semua gagal */
+    _sessionLoading = null;
+    throw new Error('Semua model gagal load. Error terakhir: ' + (lastError ? lastError.message : 'unknown'));
+  })();
 
   try {
-    _session = await ort.InferenceSession.create(UPSCALE_CONFIG.modelPath, {
-      executionProviders: providers,
-      graphOptimizationLevel: 'all'
-    });
-
-    _currentProvider = _useWebGPU ? 'webgpu' : 'wasm';
-    onLog('Session ready: ' + _currentProvider);
-
-    return _session;
+    return await _sessionLoading;
   } catch (err) {
-    onLog('Primary model failed, trying fallback...', 'error');
-
-    _session = await ort.InferenceSession.create(UPSCALE_CONFIG.modelFallback, {
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'all'
-    });
-
-    _currentProvider = 'wasm';
-    onLog('Fallback session ready');
-
-    return _session;
+    _sessionLoading = null;
+    throw err;
   }
 }
 
@@ -112,21 +159,21 @@ async function loadSession(onLog) {
    ───────────────────────────────────────────────────────────── */
 async function upscaleImage(file, onProgress, onLog) {
   onProgress = onProgress || function () {};
-  onLog = onLog || function () {};
+  onLog      = onLog      || function () {};
 
   const t0 = performance.now();
 
-  /* STEP 1 — Load image */
+  /* ─── STEP 1: Load image ─── */
   onProgress(5, 'Loading image');
   onLog('Reading ' + file.name);
 
-  const img = await loadImage(file);
+  const img  = await loadImage(file);
   const srcW = img.naturalWidth;
   const srcH = img.naturalHeight;
 
   onLog('Source: ' + srcW + '×' + srcH);
 
-  /* STEP 2 — Prepare input (resize if too large) */
+  /* ─── STEP 2: Prepare input (resize kalau kebesaran) ─── */
   const maxSize = UPSCALE_CONFIG.maxInputSize;
   let inputW = srcW;
   let inputH = srcH;
@@ -138,56 +185,60 @@ async function upscaleImage(file, onProgress, onLog) {
     onLog('Resized input: ' + inputW + '×' + inputH);
   }
 
-  /* STEP 3 — Load model */
+  /* ─── STEP 3: Load model ─── */
   onProgress(15, 'Loading AI model');
   const session = await loadSession(onLog);
 
-  /* STEP 4 — Convert to tensor */
+  /* ─── STEP 4: Convert ke tensor ─── */
   onProgress(25, 'Preparing tensor');
   const canvas = document.createElement('canvas');
-  canvas.width = inputW;
+  canvas.width  = inputW;
   canvas.height = inputH;
+
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0, inputW, inputH);
 
-  const imageData = ctx.getImageData(0, 0, inputW, inputH);
+  const imageData  = ctx.getImageData(0, 0, inputW, inputH);
   const inputTensor = imageToTensor(imageData, inputW, inputH);
 
-  /* STEP 5 — Run inference */
+  /* ─── STEP 5: Run inference ─── */
   onProgress(40, 'Running AI inference');
   onLog('Input tensor: ' + inputW + '×' + inputH);
 
   const feeds = {};
   feeds[session.inputNames[0]] = inputTensor;
 
-  const output = await session.run(feeds);
+  const output       = await session.run(feeds);
   const outputTensor = output[session.outputNames[0]];
 
   onProgress(75, 'Processing output');
 
-  /* STEP 6 — Convert tensor back to image */
+  /* ─── STEP 6: Convert tensor back ke image ─── */
   const dims = outputTensor.dims;
   let outH, outW, isNCHW;
 
   if (dims[1] === 3) {
     isNCHW = true;
-    outH = dims[2];
-    outW = dims[3];
+    outH   = dims[2];
+    outW   = dims[3];
   } else {
     isNCHW = false;
-    outH = dims[1];
-    outW = dims[2];
+    outH   = dims[1];
+    outW   = dims[2];
   }
 
   onLog('Output: ' + outW + '×' + outH);
 
   const outCanvas = tensorToCanvas(outputTensor.data, outW, outH, isNCHW);
 
-  /* STEP 7 — Encode to PNG */
+  /* ─── STEP 7: Encode ke PNG ─── */
   onProgress(90, 'Encoding PNG');
 
-  const blob = await new Promise(function (resolve) {
-    outCanvas.toBlob(resolve, 'image/png', 1.0);
+  const blob = await new Promise(function (resolve, reject) {
+    outCanvas.toBlob(function (b) {
+      if (b) resolve(b);
+      else reject(new Error('Gagal encode PNG'));
+    }, 'image/png', 1.0);
   });
 
   onProgress(100, 'Done');
@@ -196,10 +247,10 @@ async function upscaleImage(file, onProgress, onLog) {
   onLog('Complete in ' + elapsed + 's', 'done');
 
   return {
-    blob: blob,
-    width: outW,
-    height: outH,
-    elapsed: parseFloat(elapsed),
+    blob:     blob,
+    width:    outW,
+    height:   outH,
+    elapsed:  parseFloat(elapsed),
     provider: _currentProvider
   };
 }
@@ -222,6 +273,12 @@ function loadImage(file) {
       reject(new Error('Gagal load image'));
     };
 
+    /* Timeout safety */
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load timeout'));
+    }, 15000);
+
     img.src = url;
   });
 }
@@ -230,15 +287,15 @@ function loadImage(file) {
    SECTION 07 — IMAGE → TENSOR
    ───────────────────────────────────────────────────────────── */
 function imageToTensor(imageData, width, height) {
-  const data = imageData.data;
+  const data   = imageData.data;
   const pixels = width * height;
 
   const floatData = new Float32Array(3 * pixels);
 
   for (let i = 0; i < pixels; i++) {
-    floatData[i]              = data[i * 4]     / 255.0;  // R
-    floatData[pixels + i]     = data[i * 4 + 1] / 255.0;  // G
-    floatData[2 * pixels + i] = data[i * 4 + 2] / 255.0;  // B
+    floatData[i]              = data[i * 4]     / 255.0;  /* R */
+    floatData[pixels + i]     = data[i * 4 + 1] / 255.0;  /* G */
+    floatData[2 * pixels + i] = data[i * 4 + 2] / 255.0;  /* B */
   }
 
   return new window.ort.Tensor('float32', floatData, [1, 3, height, width]);
@@ -249,13 +306,13 @@ function imageToTensor(imageData, width, height) {
    ───────────────────────────────────────────────────────────── */
 function tensorToCanvas(data, width, height, isNCHW) {
   const canvas = document.createElement('canvas');
-  canvas.width = width;
+  canvas.width  = width;
   canvas.height = height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx     = canvas.getContext('2d');
   const imgData = ctx.createImageData(width, height);
-  const out = imgData.data;
-  const pixels = width * height;
+  const out     = imgData.data;
+  const pixels  = width * height;
 
   for (let i = 0; i < pixels; i++) {
     let r, g, b;
@@ -283,43 +340,54 @@ function tensorToCanvas(data, width, height, isNCHW) {
 /* ─────────────────────────────────────────────────────────────
    SECTION 09 — HELPERS
    ───────────────────────────────────────────────────────────── */
+
+/* 09.1 — Clamp 0-255 */
 function clamp255(v) {
-  if (v < 0) return 0;
+  if (v < 0)   return 0;
   if (v > 255) return 255;
   return Math.round(v);
 }
 
-function loadScript(url) {
-  return new Promise(function (resolve, reject) {
-    // Skip if already loaded
-    const existing = document.querySelector('script[src="' + url + '"]');
-    if (existing) {
-      if (existing.dataset.loaded) return resolve();
-      existing.addEventListener('load', resolve);
-      existing.addEventListener('error', reject);
-      return;
-    }
-
-    const s = document.createElement('script');
-    s.src = url;
-    s.async = true;
-    s.onload = function () {
-      s.dataset.loaded = 'true';
-      resolve();
-    };
-    s.onerror = function () {
-      reject(new Error('Failed to load: ' + url));
-    };
-    document.head.appendChild(s);
-  });
+/* 09.2 — Timeout wrapper */
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise(function (_, reject) {
+      setTimeout(function () {
+        reject(new Error(message || 'Timeout'));
+      }, ms);
+    })
+  ]);
 }
 
+/* 09.3 — Shorten URL for log */
+function shortenUrl(url) {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/').filter(Boolean);
+    return u.hostname + '/' + (parts[parts.length - 1] || '');
+  } catch (e) {
+    return url.slice(0, 50) + '...';
+  }
+}
+
+/* 09.4 — Get upscale info */
 function getUpscaleInfo() {
   return {
-    provider: _currentProvider,
+    provider:        _currentProvider,
     webgpuSupported: _useWebGPU,
-    modelLoaded: _session !== null
+    modelLoaded:     _session !== null,
+    modelPath:       _loadedModelPath
   };
+}
+
+/* 09.5 — Reset session (debug only) */
+function resetUpscaleSession() {
+  try { _session && _session.release && _session.release(); } catch (e) {}
+  _session          = null;
+  _sessionLoading   = null;
+  _loadedModelPath  = null;
+  console.log('[FAMZ] Upscale session reset');
 }
 
 /* ─────────────────────────────────────────────────────────────
