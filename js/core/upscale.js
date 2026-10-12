@@ -95,10 +95,18 @@ async function loadONNX() {
    ───────────────────────────────────────────────────────────── */
 async function loadSession(onLog) {
   if (_session) return _session;
-  if (_sessionLoading) return _sessionLoading;
+
+  /* Kalau udah loading, warn kalau onLog beda */
+  if (_sessionLoading) {
+    if (_sessionLoading.__onLog && onLog && _sessionLoading.__onLog !== onLog) {
+      console.warn('[FAMZ] loadSession: multiple onLog detected, using first one');
+    }
+    return _sessionLoading;
+  }
 
   _sessionLoading = (async function () {
     const ort = await loadONNX();
+    // ... (rest same)
 
     const providers = _useWebGPU
       ? ['webgpu', 'wasm']
