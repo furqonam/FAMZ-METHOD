@@ -395,6 +395,11 @@ select.field option {
   opacity: 0.9;
 }
 
+.progress__log > div.is-warn {
+  color: var(--warning);
+  opacity: 0.9;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SECTION 08 — REPORT
    ═══════════════════════════════════════════════════════════════ */
