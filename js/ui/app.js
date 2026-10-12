@@ -7,9 +7,9 @@
 
 'use strict';
 
-/* ─────────────────────────────────────────────────────────────
-   HELPERS
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 01 — HELPERS
+   ═══════════════════════════════════════════════════════════════ */
 function esc(text) {
   const div = document.createElement('div');
   div.textContent = String(text || '');
@@ -20,19 +20,26 @@ function openSupport() {
   window.open('https://t.me/vurkonnn', '_blank', 'noopener,noreferrer');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 02 — LOGIN GATE
+   ═══════════════════════════════════════════════════════════════ */
+
 /* ─────────────────────────────────────────────────────────────
-   LOGIN VIA BOT
+   02.1 — Buka Bot untuk Registrasi
    ───────────────────────────────────────────────────────────── */
-function openBotForLogin() {
+function openBotForRegister() {
   window.open('https://t.me/Famzzz_bot', '_blank');
 }
 
+/* ─────────────────────────────────────────────────────────────
+   02.2 — Buka Bot untuk VIP
+   ───────────────────────────────────────────────────────────── */
 function openBotForVip() {
   window.open('https://t.me/Famzzz_bot', '_blank');
 }
 
 /* ─────────────────────────────────────────────────────────────
-   GATE (Login Fullscreen)
+   02.3 — Buka Gate
    ───────────────────────────────────────────────────────────── */
 function openGate(msg) {
   const gate = document.getElementById('gate');
@@ -40,11 +47,17 @@ function openGate(msg) {
   if (msg) showGateErr(msg);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   02.4 — Tutup Gate
+   ───────────────────────────────────────────────────────────── */
 function closeGate() {
   const gate = document.getElementById('gate');
   if (gate) gate.hidden = true;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   02.5 — Tampilkan Error
+   ───────────────────────────────────────────────────────────── */
 function showGateErr(msg) {
   const el = document.getElementById('gate_err');
   if (el) {
@@ -53,14 +66,58 @@ function showGateErr(msg) {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   02.6 — Bersihkan Error
+   ───────────────────────────────────────────────────────────── */
 function clearGateErr() {
   const el = document.getElementById('gate_err');
   if (el) el.textContent = '';
 }
 
 /* ─────────────────────────────────────────────────────────────
-   TIER BADGE
+   02.7 — Proses Login
    ───────────────────────────────────────────────────────────── */
+async function gateLogin() {
+  const input = document.getElementById('gate_input');
+  const btn   = document.getElementById('gate_btn');
+  const val   = input ? input.value.trim().toLowerCase().replace(/^@/, '') : '';
+
+  clearGateErr();
+
+  if (!val || val.length < 3) {
+    showGateErr('Masukkan Telegram ID terlebih dahulu.');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Memeriksa...';
+  }
+
+  try {
+    await sessionLogin(val);
+
+    closeGate();
+    updateTierBadge();
+    updateQuotaBadges();
+
+    const session = sessionGet();
+    showToast('Selamat datang — ' + session.tier.toUpperCase(), 'success');
+
+  } catch (err) {
+    console.error('[gate]', err);
+    showGateErr(err.message || 'Login gagal.');
+
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 03 — TIER BADGE
+   ═══════════════════════════════════════════════════════════════ */
 function handleTierClick() {
   const session = typeof sessionGet === 'function' ? sessionGet() : null;
 
@@ -71,9 +128,25 @@ function handleTierClick() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   QUOTA MODAL
-   ───────────────────────────────────────────────────────────── */
+function updateTierBadge() {
+  const el = document.getElementById('tier_badge');
+  if (!el) return;
+
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+
+  if (session && session.connected) {
+    const tier = session.tier || 'free';
+    el.textContent = tier.toUpperCase();
+    el.className = 'tier-badge tier-badge--' + tier;
+  } else {
+    el.textContent = 'LOGIN';
+    el.className = 'tier-badge tier-badge--free';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 04 — QUOTA MODAL
+   ═══════════════════════════════════════════════════════════════ */
 function showQuotaModal(message, reason) {
   const old = document.getElementById('famz_quota_modal');
   if (old) old.remove();
@@ -121,9 +194,9 @@ function showQuotaModal(message, reason) {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   AUTO-LOGIN DARI URL PARAMETER
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 05 — AUTO-LOGIN DARI URL
+   ═══════════════════════════════════════════════════════════════ */
 async function checkUrlLogin() {
   const urlParams = new URLSearchParams(window.location.search);
   const tgId = urlParams.get('tg');
@@ -148,20 +221,23 @@ async function checkUrlLogin() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   TOOL INIT
-   ───────────────────────────────────────────────────────────── */
-function initAllTools() {
-  try { if (typeof initPatcher  === 'function') initPatcher();  } catch (e) {}
-  try { if (typeof initEncoder  === 'function') initEncoder();  } catch (e) {}
-  try { if (typeof initUpscale  === 'function') initUpscale();  } catch (e) {}
-  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) {}
-  try { if (typeof initQueue    === 'function') initQueue();    } catch (e) {}
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 06 — QUOTA BADGES
+   ═══════════════════════════════════════════════════════════════ */
+function quotaRemaining(feature) {
+  const session = typeof sessionGet === 'function' ? sessionGet() : null;
+  if (!session || !session.connected) return 0;
+
+  const limits = {
+    free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
+    basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
+    pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
+  };
+
+  const table = limits[session.tier] || limits.free;
+  return table[feature] === -1 ? Infinity : table[feature];
 }
 
-/* ─────────────────────────────────────────────────────────────
-   BADGES
-   ───────────────────────────────────────────────────────────── */
 function updateQuotaBadges() {
   const features = ['patch', 'encode', 'upscale', 'analyze'];
   const prefix = 'famz_quota_';
@@ -189,39 +265,20 @@ function initAppBadge() {
   if (badge && !badge.textContent.trim()) badge.textContent = 'v1.0';
 }
 
-function updateTierBadge() {
-  const el = document.getElementById('tier_badge');
-  if (!el) return;
-
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-
-  if (session && session.connected) {
-    const tier = session.tier || 'free';
-    el.textContent = tier.toUpperCase();
-    el.className = 'tier-badge tier-badge--' + tier;
-  } else {
-    el.textContent = 'LOGIN';
-    el.className = 'tier-badge tier-badge--free';
-  }
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 07 — TOOL INIT
+   ═══════════════════════════════════════════════════════════════ */
+function initAllTools() {
+  try { if (typeof initPatcher  === 'function') initPatcher();  } catch (e) {}
+  try { if (typeof initEncoder  === 'function') initEncoder();  } catch (e) {}
+  try { if (typeof initUpscale  === 'function') initUpscale();  } catch (e) {}
+  try { if (typeof initAnalyzer === 'function') initAnalyzer(); } catch (e) {}
+  try { if (typeof initQueue    === 'function') initQueue();    } catch (e) {}
 }
 
-function quotaRemaining(feature) {
-  const session = typeof sessionGet === 'function' ? sessionGet() : null;
-  if (!session || !session.connected) return 0;
-
-  const limits = {
-    free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
-    basic: { patch: 25, encode: 15, upscale: 10, analyze: 25, queue: 15 },
-    pro:   { patch: -1, encode: -1, upscale: -1, analyze: -1, queue: -1 }
-  };
-
-  const table = limits[session.tier] || limits.free;
-  return table[feature] === -1 ? Infinity : table[feature];
-}
-
-/* ─────────────────────────────────────────────────────────────
-   PWA SERVICE WORKER
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 08 — PWA SERVICE WORKER
+   ═══════════════════════════════════════════════════════════════ */
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
 
@@ -243,9 +300,9 @@ async function registerServiceWorker() {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   HANDLERS
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 09 — HANDLERS
+   ═══════════════════════════════════════════════════════════════ */
 function initVisibilityHandler() {
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
@@ -280,9 +337,9 @@ function initErrorBoundary() {
   });
 }
 
-/* ─────────────────────────────────────────────────────────────
-   APP INIT
-   ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 10 — APP INIT
+   ═══════════════════════════════════════════════════════════════ */
 async function initApp() {
   console.log('[FAMZ] Starting app...');
 
@@ -322,4 +379,7 @@ async function initApp() {
   console.log('[FAMZ] App ready');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 11 — EXPORT
+   ═══════════════════════════════════════════════════════════════ */
 console.log('[FAMZ] app.js loaded');
