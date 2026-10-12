@@ -11,17 +11,17 @@
    SECTION 01 — CONFIG
    ───────────────────────────────────────────────────────────── */
 const QUEUE_CONFIG = {
-  maxFiles: 10,
-  maxConcurrent: 1,       // Process 1 at a time (for stability)
-  maxFileSize: 500 * 1024 * 1024 // 500MB
+  maxFiles:      10,
+  maxConcurrent: 1,                /* Process 1 at a time (stability) */
+  maxFileSize:   500 * 1024 * 1024 /* 500MB */
 };
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — QUEUE STATE
    ───────────────────────────────────────────────────────────── */
 const _queue = {
-  items: [],       // { id, file, name, size, status, progress, result, error }
-  running: false,
+  items:        [],  /* { id, file, name, size, status, progress, result, error } */
+  running:      false,
   currentIndex: -1,
   autoDownload: true
 };
@@ -32,41 +32,44 @@ let _queueIdCounter = 0;
    SECTION 03 — ADD ITEMS
    ───────────────────────────────────────────────────────────── */
 function queueAddFiles(files) {
-  const arr = Array.from(files);
-  const added = [];
+  const arr      = Array.from(files);
+  const added    = [];
   const rejected = [];
 
   for (let i = 0; i < arr.length; i++) {
     const file = arr[i];
 
-    // Check max
+    /* 03.1 — Check max files */
     if (_queue.items.length >= QUEUE_CONFIG.maxFiles) {
-      rejected.push({ name: file.name, reason: 'Queue penuh (max ' + QUEUE_CONFIG.maxFiles + ')' });
+      rejected.push({
+        name:   file.name,
+        reason: 'Queue penuh (max ' + QUEUE_CONFIG.maxFiles + ')'
+      });
       continue;
     }
 
-    // Check type
+    /* 03.2 — Check type */
     if (!file.type.includes('video') && !file.name.toLowerCase().endsWith('.mp4')) {
       rejected.push({ name: file.name, reason: 'Bukan MP4' });
       continue;
     }
 
-    // Check size
+    /* 03.3 — Check size */
     if (file.size > QUEUE_CONFIG.maxFileSize) {
       rejected.push({ name: file.name, reason: 'File terlalu besar' });
       continue;
     }
 
-    // Add
+    /* 03.4 — Add item */
     const item = {
-      id: ++_queueIdCounter,
-      file: file,
-      name: file.name,
-      size: file.size,
-      status: 'pending',    // pending | processing | done | error
+      id:       ++_queueIdCounter,
+      file:     file,
+      name:     file.name,
+      size:     file.size,
+      status:   'pending',  /* pending | processing | done | error */
       progress: 0,
-      result: null,
-      error: null
+      result:   null,
+      error:    null
     };
 
     _queue.items.push(item);
@@ -83,6 +86,7 @@ function queueRemoveItem(id) {
   const idx = _queue.items.findIndex(function (item) { return item.id === id; });
   if (idx === -1) return false;
 
+  /* Gak boleh remove item yang lagi diproses */
   if (_queue.items[idx].status === 'processing') return false;
 
   _queue.items.splice(idx, 1);
@@ -94,7 +98,7 @@ function queueRemoveItem(id) {
    ───────────────────────────────────────────────────────────── */
 function queueClear() {
   if (_queue.running) return false;
-  _queue.items = [];
+  _queue.items        = [];
   _queue.currentIndex = -1;
   return true;
 }
@@ -104,11 +108,11 @@ function queueClear() {
    ───────────────────────────────────────────────────────────── */
 function queueGetState() {
   const counts = {
-    total: _queue.items.length,
-    pending: 0,
+    total:      _queue.items.length,
+    pending:    0,
     processing: 0,
-    done: 0,
-    error: 0
+    done:       0,
+    error:      0
   };
 
   for (let i = 0; i < _queue.items.length; i++) {
@@ -116,9 +120,9 @@ function queueGetState() {
   }
 
   return {
-    items: _queue.items,
-    counts: counts,
-    running: _queue.running,
+    items:        _queue.items,
+    counts:       counts,
+    running:      _queue.running,
     currentIndex: _queue.currentIndex
   };
 }
@@ -135,28 +139,36 @@ async function queueProcess(options, callbacks) {
     throw new Error('Queue kosong');
   }
 
+  /* 07.1 — Resolve processor (dengan guard) */
+  const processor = options && options.processor
+    ? options.processor
+    : (typeof patchMP4 === 'function' ? patchMP4 : null);
+
+  if (!processor || typeof processor !== 'function') {
+    throw new Error('Processor tidak tersedia — patch engine gagal load');
+  }
+
   _queue.running = true;
-  options = options || {};
+  options   = options   || {};
   callbacks = callbacks || {};
 
-  const onItemStart = callbacks.onItemStart || function () {};
+  const onItemStart    = callbacks.onItemStart    || function () {};
   const onItemProgress = callbacks.onItemProgress || function () {};
-  const onItemDone = callbacks.onItemDone || function () {};
-  const onItemError = callbacks.onItemError || function () {};
-  const onAllDone = callbacks.onAllDone || function () {};
-
-  const processor = options.processor || patchMP4;
+  const onItemDone     = callbacks.onItemDone     || function () {};
+  const onItemError    = callbacks.onItemError    || function () {};
+  const onAllDone      = callbacks.onAllDone      || function () {};
 
   try {
     for (let i = 0; i < _queue.items.length; i++) {
       const item = _queue.items[i];
 
+      /* Skip yang udah done */
       if (item.status === 'done') continue;
 
       _queue.currentIndex = i;
-      item.status = 'processing';
-      item.progress = 0;
-      item.error = null;
+      item.status         = 'processing';
+      item.progress       = 0;
+      item.error          = null;
 
       onItemStart(item, i);
 
@@ -164,44 +176,48 @@ async function queueProcess(options, callbacks) {
         const buffer = await item.file.arrayBuffer();
         const result = await processor(buffer, options);
 
+        /* Validate result */
         if (!result.validation || !result.validation.ok) {
-          throw new Error(result.validation ? result.validation.reason : 'Validation failed');
+          const reason = result.validation
+            ? result.validation.reason
+            : 'Validation failed';
+          throw new Error(reason);
         }
 
-        // Build output file
+        /* Build output file */
         const outputName = buildOutputName(item.name, options.mode || 'patch');
-        const blob = new Blob([result.output], { type: 'video/mp4' });
+        const blob       = new Blob([result.output], { type: 'video/mp4' });
 
-        item.status = 'done';
+        item.status   = 'done';
         item.progress = 100;
-        item.result = {
-          blob: blob,
-          name: outputName,
-          size: blob.size,
-          before: result.before,
-          after: result.after,
+        item.result   = {
+          blob:    blob,
+          name:    outputName,
+          size:    blob.size,
+          before:  result.before,
+          after:   result.after,
           elapsed: result.elapsed
         };
 
         onItemDone(item, i);
 
-        // Auto download if enabled
+        /* Auto download */
         if (_queue.autoDownload) {
           downloadBlob(blob, outputName);
         }
 
-        // Small delay between items (let UI update)
+        /* Delay kecil biar UI sempet update */
         await sleep(300);
 
       } catch (err) {
         item.status = 'error';
-        item.error = err.message;
+        item.error  = err.message;
 
         onItemError(item, i, err);
       }
     }
   } finally {
-    _queue.running = false;
+    _queue.running      = false;
     _queue.currentIndex = -1;
     onAllDone(queueGetState());
   }
@@ -211,8 +227,8 @@ async function queueProcess(options, callbacks) {
    SECTION 08 — BUILD OUTPUT NAME
    ───────────────────────────────────────────────────────────── */
 function buildOutputName(inputName, mode) {
-  const base = inputName.replace(/\.[^/.]+$/, '');
-  const suffix = mode || 'patch';
+  const base      = inputName.replace(/\.[^/.]+$/, '');
+  const suffix    = mode || 'patch';
   const timestamp = Date.now().toString().slice(-6);
   return base + '_' + suffix + '_' + timestamp + '.mp4';
 }
@@ -230,61 +246,68 @@ function queueGetAutoDownload() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 10 — DOWNLOAD ZIP (kalau gak auto-download)
+   SECTION 10 — DOWNLOAD ALL (FIXED: skip yang udah ke-download)
+   ═══════════════════════════════════════════════════════════════
+   Kalau autoDownload aktif → file udah ke-download otomatis.
+   Fungsi ini cuma buat download yang BELUM ke-download.
    ───────────────────────────────────────────────────────────── */
 async function queueDownloadAll() {
   const doneItems = _queue.items.filter(function (item) {
-    return item.status === 'done' && item.result;
+    return item.status === 'done' && item.result && !item.result.downloaded;
   });
 
   if (doneItems.length === 0) {
-    throw new Error('Gak ada file selesai');
+    throw new Error('Gak ada file baru untuk di-download');
   }
 
-  // Download one by one (no ZIP library dependency)
+  let count = 0;
   for (let i = 0; i < doneItems.length; i++) {
     const item = doneItems[i];
-    downloadBlob(item.result.blob, item.result.name);
-    await sleep(200);
+
+    try {
+      downloadBlob(item.result.blob, item.result.name);
+      item.result.downloaded = true;
+      count++;
+      await sleep(200);
+    } catch (err) {
+      console.warn('[queue] download failed:', item.name, err.message);
+    }
   }
 
-  return doneItems.length;
+  return count;
 }
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 11 — STATS
    ───────────────────────────────────────────────────────────── */
 function queueGetStats() {
-  const state = queueGetState();
-  let totalBefore = 0;
-  let totalAfter = 0;
-  let totalTime = 0;
+  const state       = queueGetState();
+  let totalBefore   = 0;
+  let totalAfter    = 0;
+  let totalTime     = 0;
 
   for (let i = 0; i < state.items.length; i++) {
     const item = state.items[i];
     if (item.result) {
-      totalBefore += item.result.before || 0;
-      totalAfter += item.result.after || 0;
-      totalTime += item.result.elapsed || 0;
+      totalBefore += item.result.before  || 0;
+      totalAfter  += item.result.after   || 0;
+      totalTime   += item.result.elapsed || 0;
     }
   }
 
   return {
-    files: state.counts.done,
+    files:       state.counts.done,
     totalBefore: totalBefore,
-    totalAfter: totalAfter,
-    totalTime: totalTime
+    totalAfter:  totalAfter,
+    totalTime:   totalTime
   };
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — HELPERS
-   ───────────────────────────────────────────────────────────── */
-function sleep(ms) {
-  return new Promise(function (r) { setTimeout(r, ms); });
-}
-
-/* ─────────────────────────────────────────────────────────────
-   SECTION 13 — EXPORT
+   SECTION 12 — EXPORT
+   ═══════════════════════════════════════════════════════════════
+   CATATAN: sleep() TIDAK didefinisikan di sini.
+   Pakai sleep() dari encoder.js (SECTION 08.4).
+   Cek urutan load di index.html: encoder.js → queue.js
    ───────────────────────────────────────────────────────────── */
 console.log('[FAMZ] queue.js loaded');
