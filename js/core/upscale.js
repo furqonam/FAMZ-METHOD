@@ -34,11 +34,11 @@ const UPSCALE_CONFIG = {
 /* ─────────────────────────────────────────────────────────────
    SECTION 02 — MODULE STATE
    ───────────────────────────────────────────────────────────── */
-let _ortInstance   = null;
-let _ortLoading    = null;
-let _session       = null;
-let _sessionLoading = null;
-let _useWebGPU     = false;
+let _ortInstance     = null;
+let _ortLoading      = null;
+let _session         = null;
+let _sessionLoading  = null;
+let _useWebGPU       = false;
 let _currentProvider = 'wasm';
 let _loadedModelPath = null;
 
@@ -92,11 +92,12 @@ async function loadONNX() {
 
 /* ─────────────────────────────────────────────────────────────
    SECTION 04 — SESSION LOADER (multi model fallback)
+   FIX: Handle multiple onLog + race condition
    ───────────────────────────────────────────────────────────── */
 async function loadSession(onLog) {
   if (_session) return _session;
 
-  /* Kalau udah loading, warn kalau onLog beda */
+  /* Kalau udah loading, return promise yang sama */
   if (_sessionLoading) {
     if (_sessionLoading.__onLog && onLog && _sessionLoading.__onLog !== onLog) {
       console.warn('[FAMZ] loadSession: multiple onLog detected, using first one');
@@ -104,9 +105,10 @@ async function loadSession(onLog) {
     return _sessionLoading;
   }
 
+  onLog = onLog || function () {};
+
   _sessionLoading = (async function () {
     const ort = await loadONNX();
-    // ... (rest same)
 
     const providers = _useWebGPU
       ? ['webgpu', 'wasm']
@@ -136,9 +138,9 @@ async function loadSession(onLog) {
           'Model load timeout'
         );
 
-        _session           = session;
-        _currentProvider   = _useWebGPU ? 'webgpu' : 'wasm';
-        _loadedModelPath   = modelPath;
+        _session         = session;
+        _currentProvider = _useWebGPU ? 'webgpu' : 'wasm';
+        _loadedModelPath = modelPath;
 
         onLog('Session ready: ' + _currentProvider);
         return session;
@@ -153,6 +155,9 @@ async function loadSession(onLog) {
     _sessionLoading = null;
     throw new Error('Semua model gagal load. Error terakhir: ' + (lastError ? lastError.message : 'unknown'));
   })();
+
+  /* Simpan onLog reference untuk deteksi multiple call */
+  _sessionLoading.__onLog = onLog;
 
   try {
     return await _sessionLoading;
@@ -206,7 +211,7 @@ async function upscaleImage(file, onProgress, onLog) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(img, 0, 0, inputW, inputH);
 
-  const imageData  = ctx.getImageData(0, 0, inputW, inputH);
+  const imageData   = ctx.getImageData(0, 0, inputW, inputH);
   const inputTensor = imageToTensor(imageData, inputW, inputH);
 
   /* ─── STEP 5: Run inference ─── */
@@ -371,7 +376,7 @@ function withTimeout(promise, ms, message) {
 /* 09.3 — Shorten URL for log */
 function shortenUrl(url) {
   try {
-    const u = new URL(url);
+    const u     = new URL(url);
     const parts = u.pathname.split('/').filter(Boolean);
     return u.hostname + '/' + (parts[parts.length - 1] || '');
   } catch (e) {
@@ -392,9 +397,9 @@ function getUpscaleInfo() {
 /* 09.5 — Reset session (debug only) */
 function resetUpscaleSession() {
   try { _session && _session.release && _session.release(); } catch (e) {}
-  _session          = null;
-  _sessionLoading   = null;
-  _loadedModelPath  = null;
+  _session         = null;
+  _sessionLoading  = null;
+  _loadedModelPath = null;
   console.log('[FAMZ] Upscale session reset');
 }
 
