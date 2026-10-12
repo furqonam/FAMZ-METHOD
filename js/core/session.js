@@ -58,7 +58,31 @@ function clearDeviceToken() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 05 — INIT SESSION
+   SECTION 05 — HELPER: extract user data dari response
+   Support 2 format:
+   1. { ok, username, tier, ... }          (flat)
+   2. { ok, user: { username, ... }, tier } (nested)
+   ═══════════════════════════════════════════════════════════════ */
+function extractUserData(data) {
+  if (!data) return null;
+
+  /* Format 1: flat — username di root */
+  if (data.username) {
+    return data;
+  }
+
+  /* Format 2: nested — user object */
+  if (data.user && data.user.username) {
+    return Object.assign({}, data.user, {
+      tier: data.tier || data.user.tier || 'free'
+    });
+  }
+
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 06 — INIT SESSION
    ═══════════════════════════════════════════════════════════════ */
 async function sessionInit() {
   autoResetQuota();
@@ -66,10 +90,12 @@ async function sessionInit() {
   try {
     const raw = localStorage.getItem(SESSION_CONFIG.storageKey);
     if (raw) {
-      const data = JSON.parse(raw);
-      if (data && data.username) {
-        _famzSession.user      = data;
-        _famzSession.tier      = data.tier || 'free';
+      const stored = JSON.parse(raw);
+      const user   = extractUserData(stored);
+
+      if (user) {
+        _famzSession.user      = user;
+        _famzSession.tier      = user.tier || 'free';
         _famzSession.connected = true;
       }
     }
@@ -81,7 +107,7 @@ async function sessionInit() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 06 — LOGIN
+   SECTION 07 — LOGIN
    ═══════════════════════════════════════════════════════════════ */
 async function sessionLogin(identifier) {
   const val = String(identifier || '').trim().toLowerCase().replace(/^@/, '');
@@ -96,12 +122,12 @@ async function sessionLogin(identifier) {
     { headers }
   );
 
-  /* 06.1 — Rate limited */
+  /* 07.1 — Rate limited */
   if (res.status === 429) {
     throw new Error('Terlalu banyak percobaan. Silakan coba lagi dalam 1 jam.');
   }
 
-  /* 06.2 — Forbidden */
+  /* 07.2 — Forbidden */
   if (res.status === 403) {
     const data = await res.json().catch(function () { return {}; });
 
@@ -116,22 +142,29 @@ async function sessionLogin(identifier) {
     throw new Error(data.error || 'Akses ditolak.');
   }
 
-  /* 06.3 — Other errors */
+  /* 07.3 — Other errors */
   if (!res.ok) {
     const data = await res.json().catch(function () { return {}; });
     throw new Error(data.error || 'Login gagal.');
   }
 
-  /* 06.4 — Parse response */
+  /* 07.4 — Parse response */
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Login gagal.');
 
   if (data.device_token) saveDeviceToken(data.device_token);
 
-  _famzSession.user      = data;
-  _famzSession.tier      = data.tier || 'free';
+  /* Extract user data (support flat + nested) */
+  const user = extractUserData(data);
+  if (!user) {
+    throw new Error('Format response server tidak valid');
+  }
+
+  _famzSession.user      = user;
+  _famzSession.tier      = user.tier || 'free';
   _famzSession.connected = true;
 
+  /* Simpan raw response biar sessionInit bisa parse */
   try {
     localStorage.setItem(SESSION_CONFIG.storageKey, JSON.stringify(data));
   } catch (e) {}
@@ -140,7 +173,7 @@ async function sessionLogin(identifier) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 07 — LOGOUT
+   SECTION 08 — LOGOUT
    ═══════════════════════════════════════════════════════════════ */
 function sessionLogout() {
   _famzSession.user      = null;
@@ -152,7 +185,7 @@ function sessionLogout() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 08 — GET SESSION
+   SECTION 09 — GET SESSION
    ═══════════════════════════════════════════════════════════════ */
 function sessionGet() {
   return {
@@ -175,16 +208,16 @@ function sessionIsOwner() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 09 — QUOTA
+   SECTION 10 — QUOTA
    ═══════════════════════════════════════════════════════════════ */
 
-/* 09.1 — Get limit dari table (client-side hint) */
+/* 10.1 — Get limit dari table (client-side hint) */
 function quotaLimit(feature) {
   const table = QUOTA_TABLE[_famzSession.tier] || QUOTA_TABLE.free;
   return table[feature] != null ? table[feature] : 0;
 }
 
-/* 09.2 — Get remaining (FIX: pakai usage cache) */
+/* 10.2 — Get remaining (pakai usage cache) */
 function quotaRemaining(feature) {
   const limit = quotaLimit(feature);
 
@@ -199,7 +232,7 @@ function quotaRemaining(feature) {
   return sisa;
 }
 
-/* 09.3 — Get usage dari localStorage */
+/* 10.3 — Get usage dari localStorage */
 function getUsageCache() {
   try {
     const raw = localStorage.getItem(SESSION_CONFIG.usageKey);
@@ -211,14 +244,14 @@ function getUsageCache() {
   }
 }
 
-/* 09.4 — Simpan usage ke localStorage */
+/* 10.4 — Simpan usage ke localStorage */
 function setUsageCache(usage) {
   try {
     localStorage.setItem(SESSION_CONFIG.usageKey, JSON.stringify(usage));
   } catch (e) {}
 }
 
-/* 09.5 — Increment usage lokal */
+/* 10.5 — Increment usage lokal */
 function incUsageLocal(feature) {
   const usage = getUsageCache();
   usage[feature] = (usage[feature] || 0) + 1;
@@ -226,11 +259,11 @@ function incUsageLocal(feature) {
   return usage[feature];
 }
 
-/* 09.6 — Consume quota (server-based) */
+/* 10.6 — Consume quota (server-based) */
 async function quotaConsume(feature) {
   const session = sessionGet();
 
-  /* 09.6.1 — Not logged in */
+  /* Not logged in */
   if (!session || !session.connected) {
     return {
       ok:      false,
@@ -241,7 +274,7 @@ async function quotaConsume(feature) {
 
   const tg = session.user.tg || session.user.username;
 
-  /* 09.6.2 — Build request dengan device token */
+  /* Build request dengan device token */
   const deviceToken = getStoredDeviceToken();
   const headers     = { 'Content-Type': 'application/json' };
   if (deviceToken) headers['X-Famz-Device'] = deviceToken;
@@ -253,7 +286,7 @@ async function quotaConsume(feature) {
       body:    JSON.stringify({ tg: tg, feature: feature })
     });
 
-    /* 09.6.3 — Server error */
+    /* Server error */
     if (!res.ok) {
       return {
         ok:      false,
@@ -264,7 +297,7 @@ async function quotaConsume(feature) {
 
     const data = await res.json();
 
-    /* 09.6.4 — Quota ditolak server */
+    /* Quota ditolak server */
     if (!data.ok) {
       return {
         ok:      false,
@@ -273,7 +306,7 @@ async function quotaConsume(feature) {
       };
     }
 
-    /* 09.6.5 — Sukses: increment usage lokal */
+    /* Sukses: increment usage lokal */
     incUsageLocal(feature);
 
     return {
@@ -293,7 +326,7 @@ async function quotaConsume(feature) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 10 — DAILY RESET
+   SECTION 11 — DAILY RESET
    ═══════════════════════════════════════════════════════════════ */
 function autoResetQuota() {
   const today = new Date().toDateString();
@@ -310,6 +343,6 @@ function autoResetQuota() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 11 — EXPORT
+   SECTION 12 — EXPORT
    ═══════════════════════════════════════════════════════════════ */
 console.log('[FAMZ] session.js loaded — worker: ' + SESSION_CONFIG.apiBase);
