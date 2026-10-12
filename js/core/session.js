@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝙫𝟭.𝟬
+   𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿 𝘃𝟭.𝟬
    js/core/session.js
    Session + Quota + Auth + Device Binding
    © 2026 𝙁𝘼𝙈𝙕 // 𝙫𝙪𝙧𝙠𝙤𝙣𝙣𝙣
@@ -21,7 +21,8 @@ const SESSION_CONFIG = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 02 — QUOTA TABLE
+   SECTION 02 — QUOTA TABLE (client-side hint only)
+   ⚠️  Server tetap source of truth. Ini cuma buat UI.
    ═══════════════════════════════════════════════════════════════ */
 const QUOTA_TABLE = {
   free:  { patch: 3,  encode: 0,  upscale: 1,  analyze: 5,  queue: 0  },
@@ -33,8 +34,8 @@ const QUOTA_TABLE = {
    SECTION 03 — SESSION STATE
    ═══════════════════════════════════════════════════════════════ */
 var _famzSession = {
-  user: null,
-  tier: 'free',
+  user:      null,
+  tier:      'free',
   connected: false
 };
 
@@ -67,8 +68,8 @@ async function sessionInit() {
     if (raw) {
       const data = JSON.parse(raw);
       if (data && data.username) {
-        _famzSession.user = data;
-        _famzSession.tier = data.tier || 'free';
+        _famzSession.user      = data;
+        _famzSession.tier      = data.tier || 'free';
         _famzSession.connected = true;
       }
     }
@@ -87,7 +88,7 @@ async function sessionLogin(identifier) {
   if (!val) throw new Error('ID tidak valid');
 
   const deviceToken = getStoredDeviceToken();
-  const headers = { 'Accept': 'application/json' };
+  const headers     = { 'Accept': 'application/json' };
   if (deviceToken) headers['X-Famz-Device'] = deviceToken;
 
   const res = await fetch(
@@ -95,12 +96,14 @@ async function sessionLogin(identifier) {
     { headers }
   );
 
+  /* 06.1 — Rate limited */
   if (res.status === 429) {
     throw new Error('Terlalu banyak percobaan. Silakan coba lagi dalam 1 jam.');
   }
 
+  /* 06.2 — Forbidden */
   if (res.status === 403) {
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(function () { return {}; });
 
     if (data.need_register) {
       throw new Error('ID belum terdaftar. Buka bot @Famzzz_bot dan kirim /register terlebih dahulu.');
@@ -113,21 +116,25 @@ async function sessionLogin(identifier) {
     throw new Error(data.error || 'Akses ditolak.');
   }
 
+  /* 06.3 — Other errors */
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json().catch(function () { return {}; });
     throw new Error(data.error || 'Login gagal.');
   }
 
+  /* 06.4 — Parse response */
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Login gagal.');
 
   if (data.device_token) saveDeviceToken(data.device_token);
 
-  _famzSession.user = data;
-  _famzSession.tier = data.tier || 'free';
+  _famzSession.user      = data;
+  _famzSession.tier      = data.tier || 'free';
   _famzSession.connected = true;
 
-  localStorage.setItem(SESSION_CONFIG.storageKey, JSON.stringify(data));
+  try {
+    localStorage.setItem(SESSION_CONFIG.storageKey, JSON.stringify(data));
+  } catch (e) {}
 
   return _famzSession.user;
 }
@@ -136,8 +143,8 @@ async function sessionLogin(identifier) {
    SECTION 07 — LOGOUT
    ═══════════════════════════════════════════════════════════════ */
 function sessionLogout() {
-  _famzSession.user = null;
-  _famzSession.tier = 'free';
+  _famzSession.user      = null;
+  _famzSession.tier      = 'free';
   _famzSession.connected = false;
 
   try { localStorage.removeItem(SESSION_CONFIG.storageKey); } catch (e) {}
@@ -149,8 +156,8 @@ function sessionLogout() {
    ═══════════════════════════════════════════════════════════════ */
 function sessionGet() {
   return {
-    user: _famzSession.user,
-    tier: _famzSession.tier,
+    user:      _famzSession.user,
+    tier:      _famzSession.tier,
     connected: _famzSession.connected
   };
 }
@@ -164,66 +171,124 @@ function sessionIsBasic() {
 }
 
 function sessionIsOwner() {
-  return _famzSession.user && _famzSession.user.is_owner === true;
+  return !!(_famzSession.user && _famzSession.user.is_owner === true);
 }
 
 /* ═══════════════════════════════════════════════════════════════
    SECTION 09 — QUOTA
    ═══════════════════════════════════════════════════════════════ */
+
+/* 09.1 — Get limit dari table (client-side hint) */
 function quotaLimit(feature) {
   const table = QUOTA_TABLE[_famzSession.tier] || QUOTA_TABLE.free;
   return table[feature] != null ? table[feature] : 0;
 }
 
+/* 09.2 — Get remaining (FIX: pakai usage cache) */
 function quotaRemaining(feature) {
   const limit = quotaLimit(feature);
+
+  /* -1 = unlimited */
   if (limit === -1) return Infinity;
-  return limit;
+
+  /* Cek usage dari cache */
+  const usage = getUsageCache();
+  const used  = usage[feature] || 0;
+  const sisa  = Math.max(0, limit - used);
+
+  return sisa;
 }
 
+/* 09.3 — Get usage dari localStorage */
+function getUsageCache() {
+  try {
+    const raw = localStorage.getItem(SESSION_CONFIG.usageKey);
+    if (!raw) return {};
+    const data = JSON.parse(raw);
+    return (data && typeof data === 'object') ? data : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/* 09.4 — Simpan usage ke localStorage */
+function setUsageCache(usage) {
+  try {
+    localStorage.setItem(SESSION_CONFIG.usageKey, JSON.stringify(usage));
+  } catch (e) {}
+}
+
+/* 09.5 — Increment usage lokal */
+function incUsageLocal(feature) {
+  const usage = getUsageCache();
+  usage[feature] = (usage[feature] || 0) + 1;
+  setUsageCache(usage);
+  return usage[feature];
+}
+
+/* 09.6 — Consume quota (server-based) */
 async function quotaConsume(feature) {
   const session = sessionGet();
 
+  /* 09.6.1 — Not logged in */
   if (!session || !session.connected) {
     return {
-      ok: false,
-      reason: 'not_logged_in',
+      ok:      false,
+      reason:  'not_logged_in',
       message: 'Silakan login terlebih dahulu'
     };
   }
 
   const tg = session.user.tg || session.user.username;
 
+  /* 09.6.2 — Build request dengan device token */
+  const deviceToken = getStoredDeviceToken();
+  const headers     = { 'Content-Type': 'application/json' };
+  if (deviceToken) headers['X-Famz-Device'] = deviceToken;
+
   try {
     const res = await fetch(SESSION_CONFIG.apiBase + SESSION_CONFIG.quotaPath, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tg, feature })
+      method:  'POST',
+      headers: headers,
+      body:    JSON.stringify({ tg: tg, feature: feature })
     });
 
+    /* 09.6.3 — Server error */
     if (!res.ok) {
-      return { ok: false, reason: 'server_error', message: 'Server error: ' + res.status };
+      return {
+        ok:      false,
+        reason:  'server_error',
+        message: 'Server error: ' + res.status
+      };
     }
 
     const data = await res.json();
 
+    /* 09.6.4 — Quota ditolak server */
     if (!data.ok) {
       return {
-        ok: false,
-        reason: data.reason || 'error',
+        ok:      false,
+        reason:  data.reason || 'error',
         message: data.error || 'Quota check failed'
       };
     }
 
+    /* 09.6.5 — Sukses: increment usage lokal */
+    incUsageLocal(feature);
+
     return {
-      ok: true,
+      ok:        true,
       remaining: data.remaining,
       unlimited: data.unlimited || false
     };
 
   } catch (err) {
-    console.warn('[FAMZ] Server unreachable');
-    return { ok: false, reason: 'network_error', message: 'Koneksi bermasalah' };
+    console.warn('[FAMZ] Quota server unreachable', err);
+    return {
+      ok:      false,
+      reason:  'network_error',
+      message: 'Koneksi bermasalah'
+    };
   }
 }
 
