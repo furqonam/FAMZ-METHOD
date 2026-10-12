@@ -22,13 +22,13 @@ const PLATFORM_TARGETS = {
    ───────────────────────────────────────────────────────────── */
 function patchMP4(buffer, opts) {
   opts = opts || {};
-  const t0 = performance.now();
+  const t0     = performance.now();
   const before = buffer.byteLength;
 
   const arr = new Uint8Array(buffer);
   if (!isMp4(arr)) throw new Error('File bukan MP4 valid');
 
-  const dv = new DataView(arr.buffer);
+  const dv    = new DataView(arr.buffer);
   const atoms = scanAtoms(arr, dv, 0, arr.length);
 
   const ftyp = pickTop(atoms, 'ftyp');
@@ -40,28 +40,35 @@ function patchMP4(buffer, opts) {
 
   const repl = new Map();
 
-  /* STEP A: Spoof mvhd (convert v1 + duration 0xFFFFFFFF) */
+  /* ─── STEP A: Spoof mvhd (convert v1 + duration 0xFFFFFFFF) ─── */
   const mvhd = pickChild(moov, 'mvhd');
   if (mvhd) {
     repl.set(mvhd, rebuildMvhd(arr, dv, mvhd));
   }
 
-  /* STEP B: Spoof resolusi + bitrate (H.264 + HEVC) */
+  /* ─── STEP B: Spoof resolusi + bitrate (H.264 + HEVC) ─── */
   const platform = opts.platform || 'tiktok';
-  const target = PLATFORM_TARGETS[platform] || PLATFORM_TARGETS.tiktok;
+  const target   = PLATFORM_TARGETS[platform] || PLATFORM_TARGETS.tiktok;
   const spoofMap = spoofResolutionAndBitrate(arr, dv, moov, target);
-  spoofMap.forEach(function(v, k) { repl.set(k, v); });
+  spoofMap.forEach(function (v, k) { repl.set(k, v); });
 
-  /* STEP C: Signature udta (replace) */
-  const sigUdta = buildSignatureUdta();
+  /* ─── STEP C: Signature udta (merge, bukan replace) ─── */
+  const sigUdta      = buildSignatureUdta();
   const existingUdta = pickChild(moov, 'udta');
+
   if (existingUdta) {
-    repl.set(existingUdta, mergeUdta(arr, existingUdta, sigUdta));
+    const merged = mergeUdta(arr, existingUdta, sigUdta);
+    if (merged) {
+      repl.set(existingUdta, merged);
+    } else {
+      /* Fallback: replace kalau merge gagal */
+      repl.set(existingUdta, sigUdta);
+    }
   } else {
     repl.set('__appendUdta__', sigUdta);
   }
 
-  /* STEP D: Collect stco */
+  /* ─── STEP D: Collect stco ─── */
   const stcos = [];
   for (let i = 0; i < moov.children.length; i++) {
     const trak = moov.children[i];
@@ -72,40 +79,40 @@ function patchMP4(buffer, opts) {
     if (stco) stcos.push(stco);
   }
 
-  /* STEP E: Pass 1 — rebuild with delta 0 */
+  /* ─── STEP E: Pass 1 — rebuild with delta 0 ─── */
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), 0));
   }
   const ftypBytes = ftyp ? sliceAtomRaw(ftyp) : new Uint8Array(0);
-  const moov1 = rebuildTree(moov, repl);
+  const moov1     = rebuildTree(moov, repl);
 
-  /* STEP F: Calculate delta */
+  /* ─── STEP F: Calculate delta ─── */
   const newMdatStart = ftypBytes.length + moov1.length;
   const oldMdatStart = mdat.offset;
-  const delta = newMdatStart - oldMdatStart;
+  const delta        = newMdatStart - oldMdatStart;
 
-  /* STEP G: Pass 2 — rebuild with real delta */
+  /* ─── STEP G: Pass 2 — rebuild with real delta ─── */
   repl.delete('__appendUdta__');
   for (let i = 0; i < stcos.length; i++) {
     repl.set(stcos[i], rebuildStco(scanStco(stcos[i]), delta));
   }
   const moovFinal = rebuildTree(moov, repl);
-  const mdatFull = sliceAtomRaw(mdat);
+  const mdatFull  = sliceAtomRaw(mdat);
 
-  /* STEP H: Merge output */
+  /* ─── STEP H: Merge output ─── */
   const output = mergeBytes([ftypBytes, moovFinal, mdatFull]);
 
-  /* STEP I: Validate */
+  /* ─── STEP I: Validate ─── */
   const validation = validatePatch(output);
 
   const elapsed = (performance.now() - t0) / 1000;
 
   return {
-    output: output.buffer,
-    before: before,
-    after: output.length,
+    output:     output.buffer,
+    before:     before,
+    after:      output.length,
     validation: validation,
-    elapsed: elapsed
+    elapsed:    elapsed
   };
 }
 
@@ -115,6 +122,7 @@ function patchMP4(buffer, opts) {
 function rebuildMvhd(arr, dv, atom) {
   const version = arr[atom.contentStart];
 
+  /* ─── Version 1: cukup patch duration 64-bit ─── */
   if (version === 1) {
     const out = sliceAtomRaw(atom).slice();
     const odv = new DataView(out.buffer, out.byteOffset);
@@ -123,8 +131,9 @@ function rebuildMvhd(arr, dv, atom) {
     return out;
   }
 
-  const ct      = dv.getUint32(atom.contentStart + 4, false);
-  const mt      = dv.getUint32(atom.contentStart + 8, false);
+  /* ─── Version 0: convert ke v1 + set max duration ─── */
+  const ct      = dv.getUint32(atom.contentStart + 4,  false);
+  const mt      = dv.getUint32(atom.contentStart + 8,  false);
   const ts      = dv.getUint32(atom.contentStart + 12, false);
   const restSrc = atom.contentStart + 20;
   const restLen = atom.size - 8 - 20;
@@ -171,11 +180,12 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 
     if (entryType === 'avc1' || entryType === 'avc3' ||
         entryType === 'hvc1' || entryType === 'hev1') {
+
       const entrySize = dv.getUint32(entryStart, false);
       if (entrySize > stsd.end - entryStart || entrySize < 32) continue;
 
       const entry = arr.slice(entryStart, entryStart + entrySize).slice();
-      const edv = new DataView(entry.buffer);
+      const edv   = new DataView(entry.buffer);
 
       const wOff = 16;
       const curW = edv.getUint16(wOff, false);
@@ -184,7 +194,7 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
       if (curW < target.width || curH < target.height) {
         const ratio = Math.min(target.width / curW, target.height / curH);
         if (ratio > 1) {
-          edv.setUint16(wOff, Math.round(curW * ratio), false);
+          edv.setUint16(wOff,     Math.round(curW * ratio), false);
           edv.setUint16(wOff + 2, Math.round(curH * ratio), false);
         }
       }
@@ -192,9 +202,9 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
       const btrtOff = findChildInBytes(entry, 'btrt');
       if (btrtOff > 0) {
         const bdv = new DataView(entry.buffer, btrtOff);
-        bdv.setUint32(8, target.bitrate, false);
-        bdv.setUint32(12, Math.round(target.bitrate * 1.5), false);
-        bdv.setUint32(16, target.bitrate, false);
+        bdv.setUint32(8,  target.bitrate,                        false);
+        bdv.setUint32(12, Math.round(target.bitrate * 1.5),      false);
+        bdv.setUint32(16, target.bitrate,                        false);
       }
 
       repl.set(stsd, rebuildStsdWithEntry(arr, stsd, entry));
@@ -210,6 +220,7 @@ function spoofResolutionAndBitrate(arr, dv, moov, target) {
 function findChildInBytes(bytes, type) {
   let off = 8;
   const dv = new DataView(bytes.buffer, bytes.byteOffset);
+
   while (off + 8 <= bytes.length) {
     const size = dv.getUint32(off, false);
     if (size < 8 || off + size > bytes.length) break;
@@ -233,7 +244,7 @@ function rebuildStsdWithEntry(arr, stsd, newEntry) {
    ───────────────────────────────────────────────────────────── */
 function rebuildStco(offsets, delta) {
   const body = new Uint8Array(8 + offsets.length * 4);
-  const dv = new DataView(body.buffer);
+  const dv   = new DataView(body.buffer);
   dv.setUint32(0, 0, false);
   dv.setUint32(4, offsets.length, false);
   for (let i = 0; i < offsets.length; i++) {
@@ -292,12 +303,12 @@ function buildSignatureUdta() {
    SECTION 10 — BUILD TAG
    ───────────────────────────────────────────────────────────── */
 function buildTag(fourCC, text) {
-  const tb = new TextEncoder().encode(text);
+  const tb   = new TextEncoder().encode(text);
   const data = new Uint8Array(16 + tb.length);
-  const dv = new DataView(data.buffer);
+  const dv   = new DataView(data.buffer);
   dv.setUint32(0, data.length, false);
   writeType(data, 4, 'data');
-  dv.setUint32(8, 1, false);
+  dv.setUint32(8,  1, false);
   dv.setUint32(12, 0, false);
   data.set(tb, 16);
   return buildAtom(fourCC, data);
@@ -320,10 +331,56 @@ function buildHdlr() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SECTION 12 — MERGE UDTA (REPLACE)
+   SECTION 12 — MERGE UDTA (FIXED — sekarang merge, bukan replace)
+   ═══════════════════════════════════════════════════════════════
+   Strategi:
+   1. Kalau udta lama gak punya meta → append signature
+   2. Kalau udta lama punya meta → append ilst signature ke dalam
+   3. Kalau parsing gagal → replace total (safety)
    ───────────────────────────────────────────────────────────── */
 function mergeUdta(arr, oldUdta, sigUdta) {
-  return sigUdta;
+  try {
+    const oldBody = arr.slice(oldUdta.contentStart, oldUdta.end);
+    const oldMeta = findChildInBytes(oldBody, 'meta');
+
+    /* ─── Kalau gak ada meta lama → append signature ─── */
+    if (oldMeta < 0) {
+      return buildAtom('udta', mergeBytes([oldBody, sigUdta.slice(8)]));
+    }
+
+    /* ─── Ada meta lama → merge ilst ─── */
+    const newUdtaBody = sigUdta.slice(8);
+    const newMeta     = findChildInBytes(newUdtaBody, 'meta');
+
+    if (newMeta < 0) {
+      return sigUdta;
+    }
+
+    /* Ambil ilst dari signature */
+    const newMetaBody = newUdtaBody.slice(newMeta + 8);
+    const newIlst     = findChildInBytes(newMetaBody, 'ilst');
+
+    if (newIlst < 0) {
+      return sigUdta;
+    }
+
+    /* Gabung: old meta body + new ilst */
+    const oldMetaBody = oldBody.slice(oldMeta + 8);
+    const mergedMetaBody = mergeBytes([
+      oldMetaBody,
+      newMetaBody.slice(newIlst)
+    ]);
+
+    const mergedMeta = buildAtom('meta', mergedMetaBody);
+
+    /* Wrap meta ke udta baru */
+    return buildAtom('udta', mergedMeta);
+
+  } catch (e) {
+    /* Fallback: replace total kalau parsing gagal */
+    console.warn('[patch] mergeUdta fallback to replace:', e.message);
+    return sigUdta;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -331,7 +388,7 @@ function mergeUdta(arr, oldUdta, sigUdta) {
    ───────────────────────────────────────────────────────────── */
 function validatePatch(output) {
   try {
-    const dv = new DataView(output.buffer, output.byteOffset, output.byteLength);
+    const dv    = new DataView(output.buffer, output.byteOffset, output.byteLength);
     const atoms = scanAtoms(output, dv, 0, output.length);
 
     const ftyp = pickTop(atoms, 'ftyp');
@@ -369,6 +426,7 @@ function validatePatch(output) {
     }
 
     return { ok: true };
+
   } catch (e) {
     return { ok: false, reason: e.message };
   }
