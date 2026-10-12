@@ -44,35 +44,33 @@
     <div class="ambient__orb ambient__orb--c"></div>
   </div>
 
-  <!-- LOGIN GATE -->
-  <div id="gate" class="gate" hidden>
-    <div class="gate__box glass">
-      <div class="gate__logo">
-        <span class="gate__mark">F</span>
-      </div>
-      <h2 class="gate__title">𝙁𝘼𝙈𝙕 𝙈𝙀𝙏𝙃𝙊𝘿</h2>
-      <p class="gate__sub">Masuk pakai username atau Telegram ID</p>
-
-      <input
-        id="gate_input"
-        class="field"
-        type="text"
-        placeholder="username atau TG ID"
-        maxlength="32"
-        autocomplete="off"
-        onkeydown="if(event.key==='Enter') gateLogin()">
-
-      <p id="gate_err" class="gate__err"></p>
-
-      <button id="gate_btn" class="btn btn--primary" onclick="gateLogin()">
-        Continue
-      </button>
-
-      <p class="gate__foot">
-        Belum terdaftar? Chat <a href="https://t.me/vurkonnn" target="_blank">@vurkonnn</a>
-      </p>
+<!-- LOGIN GATE -->
+<div id="gate" class="gate" hidden>
+  <div class="gate__box glass">
+    <div class="gate__logo">
+      <span class="gate__mark">F</span>
     </div>
+    <h2 class="gate__title">FAMZ METHOD</h2>
+    <p class="gate__sub">Login menggunakan Telegram</p>
+
+    <button class="btn btn--primary gate__btn" onclick="openBotForLogin()">
+      📱 Login via Telegram
+    </button>
+
+    <p class="gate__hint">
+      Bot akan terbuka otomatis.<br>
+      Ketik <b>/register</b> di bot,<br>
+      lalu klik tombol yang muncul.
+    </p>
+
+    <p id="gate_err" class="gate__err"></p>
+
+    <p class="gate__foot">
+      Belum punya akses? Chat
+      <a href="https://t.me/vurkonnn" target="_blank">@vurkonnn</a>
+    </p>
   </div>
+</div>
 
   <!-- TOPBAR -->
   <header class="topbar glass">
